@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx prisma:*)",
+      "Bash(pnpm add:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx next:*)",
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm test:*)"
+    ]
+  }
+}

@@ -1,0 +1,344 @@
+// Prisma Schema for SDUI Platform
+// Database: PostgreSQL (Neon)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== USER & AUTHENTICATION ====================
+
+model User {
+  id            String    @id @default(cuid())
+  clerkId       String?   @unique // Clerk user ID
+  email         String    @unique
+  name          String?
+  passwordHash  String?   // Optional - only for email/password users
+  role          UserRole  @default(USER)
+  plan          UserPlan  @default(FREE)
+  status        UserStatus @default(ACTIVE)
+  apiKey        String?   @unique
+  emailVerified Boolean   @default(false)
+  imageUrl      String?   // Profile image from OAuth providers
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLogin     DateTime?
+
+  // Relations
+  projects      Project[]
+  subscriptions Subscription[]
+  apiRequestLogs ApiRequestLog[]
+  activityLogs  ActivityLog[]
+  createdComponents PlatformComponent[] @relation("ComponentCreator")
+  createdTemplates Template[] @relation("TemplateCreator")
+
+  @@index([email])
+  @@index([clerkId])
+  @@index([status])
+  @@index([plan])
+  @@index([role])
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserPlan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+// ==================== SUBSCRIPTION ====================
+
+model Subscription {
+  id           String             @id @default(cuid())
+  userId       String
+  plan         UserPlan
+  monthlyPrice Float
+  yearlyPrice  Float?
+  apiLimit     Int
+  layoutLimit  Int
+  teamLimit    Int
+  startDate    DateTime           @default(now())
+  renewalDate  DateTime
+  status       SubscriptionStatus @default(ACTIVE)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  // Relations
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([plan])
+  @@map("subscriptions")
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAUSED
+}
+
+// ==================== PROJECT ====================
+
+model Project {
+  id            String        @id @default(cuid())
+  userId        String
+  name          String
+  description   String?
+  apiKey        String        @unique
+  status        ProjectStatus @default(ACTIVE)
+  settings      Json?         // ProjectSettings as JSON
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  layouts        Layout[]
+  layoutVersions LayoutVersion[]
+  apiEndpoints   ApiEndpoint[]
+  apiRequestLogs ApiRequestLog[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([apiKey])
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+// ==================== LAYOUT ====================
+
+model Layout {
+  id          String    @id @default(cuid())
+  projectId   String
+  name        String
+  screenName  String?   // URL-friendly screen slug e.g. "home", "cart", "restaurant"
+  rootNode    Json      // LayoutNode as JSON (design mode tree)
+  rexaJson    Json?     // REXA Flutter-compatible JSON (code mode)
+  version     Int       @default(1)
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  versions    LayoutVersion[]
+
+  @@index([projectId])
+  @@index([isPublished])
+  @@index([screenName])
+  @@map("layouts")
+}
+
+// ==================== LAYOUT VERSION ====================
+
+model LayoutVersion {
+  id          String    @id @default(cuid())
+  layoutId    String
+  projectId   String
+  screenName  String?
+  version     Int
+  rexaJson    Json      // Immutable REXA JSON snapshot
+  publishedAt DateTime  @default(now())
+  publishedBy String?   // userId of who published
+  isActive    Boolean   @default(false) // current live version for this screen
+
+  // Relations
+  layout      Layout    @relation(fields: [layoutId], references: [id], onDelete: Cascade)
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([layoutId])
+  @@index([projectId])
+  @@index([screenName])
+  @@index([isActive])
+  @@index([version])
+  @@map("layout_versions")
+}
+
+// ==================== API ENDPOINT ====================
+
+model ApiEndpoint {
+  id            String   @id @default(cuid())
+  projectId     String
+  name          String
+  method        HttpMethod
+  url           String
+  headers       Json?    // Record<string, string> as JSON
+  body          Json?    // Request body as JSON
+  responseSchema Json?   // Response schema as JSON
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("api_endpoints")
+}
+
+enum HttpMethod {
+  GET
+  POST
+  PUT
+  DELETE
+  PATCH
+}
+
+// ==================== PLATFORM COMPONENT ====================
+
+model PlatformComponent {
+  id          String              @id @default(cuid())
+  name        String
+  category    ComponentCategory
+  propsSchema Json                // PropertySchema[] as JSON
+  defaultProps Json               // Record<string, unknown> as JSON
+  version     String              @default("1.0.0")
+  visibility  ComponentVisibility @default(PUBLIC)
+  usageCount  Int                 @default(0)
+  createdBy   String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  // Relations
+  creator     User?               @relation("ComponentCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([category])
+  @@index([visibility])
+  @@index([createdBy])
+  @@map("platform_components")
+}
+
+enum ComponentCategory {
+  layout
+  input
+  display
+  navigation
+  form
+  media
+}
+
+enum ComponentVisibility {
+  PUBLIC
+  PRIVATE
+  BETA
+}
+
+// ==================== TEMPLATE ====================
+
+model Template {
+  id          String   @id @default(cuid())
+  name        String
+  category    String
+  description String?
+  layoutJson  Json     // LayoutNode as JSON
+  previewUrl  String?
+  published   Boolean  @default(false)
+  usageCount  Int      @default(0)
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  creator     User?    @relation("TemplateCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([category])
+  @@index([published])
+  @@index([createdBy])
+  @@map("templates")
+}
+
+// ==================== PRICING PLAN ====================
+
+model PricingPlan {
+  id           String   @id @default(cuid())
+  name         String
+  slug         UserPlan @unique
+  monthlyPrice Float
+  yearlyPrice  Float?
+  apiLimit     Int
+  layoutLimit  Int
+  teamLimit    Int
+  features     Json     // string[] as JSON
+  isActive     Boolean  @default(true)
+  order        Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([order])
+  @@map("pricing_plans")
+}
+
+// ==================== API REQUEST LOG ====================
+
+model ApiRequestLog {
+  id          String   @id @default(cuid())
+  projectId   String
+  userId      String
+  endpoint    String
+  method      String
+  statusCode  Int
+  responseTime Int     // in milliseconds
+  createdAt   DateTime @default(now())
+
+  // Relations
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([statusCode])
+  @@map("api_request_logs")
+}
+
+// ==================== ACTIVITY LOG ====================
+
+model ActivityLog {
+  id         String      @id @default(cuid())
+  adminId    String
+  action     String
+  entityType EntityType
+  entityId   String
+  changes    Json?       // Record<string, unknown> as JSON
+  createdAt  DateTime    @default(now())
+
+  // Relations
+  admin      User        @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([entityType])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+enum EntityType {
+  user
+  project
+  component
+  template
+  pricing
+}
