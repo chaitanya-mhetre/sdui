@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useBuilderStore } from '@/store/builderStore';
 import { DeviceSelector } from './DeviceSelector';
 import { apiRequest } from '@/lib/api-client';
-import { builderRootToRexaJson } from '@/lib/builderToRexa';
-import { validateRexaJson } from '@/lib/rexa/validation';
+import { builderRootToSduiJson } from '@/lib/builderToSdui';
+import { validateSduiJson } from '@/lib/sdui/validation';
 import {
   ArrowLeft,
   Eye,
@@ -77,19 +77,19 @@ export function Toolbar({ project }: ToolbarProps) {
         body.rootNode = rootNode;
       }
       
-      // Save rexaJson if available (from Code view)
+      // Save sduiJson if available (from Code view)
       // This ensures Code view edits are saved when clicking Save button
-      if (currentLayout?.rexaJson) {
-        let rexaJsonToSave = currentLayout.rexaJson;
+      if (currentLayout?.sduiJson) {
+        let sduiJsonToSave = currentLayout.sduiJson;
         // Ensure it's an object, not a string
-        if (typeof rexaJsonToSave === 'string') {
+        if (typeof sduiJsonToSave === 'string') {
           try {
-            rexaJsonToSave = JSON.parse(rexaJsonToSave);
+            sduiJsonToSave = JSON.parse(sduiJsonToSave);
           } catch (e) {
-            console.error('Failed to parse rexaJson for save:', e);
+            console.error('Failed to parse sduiJson for save:', e);
           }
         }
-        body.rexaJson = rexaJsonToSave;
+        body.sduiJson = sduiJsonToSave;
       }
 
       const res = await apiRequest(`/layouts/${layoutId}`, {
@@ -113,10 +113,10 @@ export function Toolbar({ project }: ToolbarProps) {
       return;
     }
 
-    // Pre-publish validation: convert builder tree to REXA and validate (depth, node count, types)
+    // Pre-publish validation: convert builder tree to SDUI and validate (depth, node count, types)
     try {
-      const rexaPayload = builderRootToRexaJson(rootNode);
-      const validation = validateRexaJson(rexaPayload);
+      const sduiPayload = builderRootToSduiJson(rootNode);
+      const validation = validateSduiJson(sduiPayload);
       if (!validation.valid) {
         alert(`Validation failed before publish:\n\n${validation.error}\n\nFix the layout and try again.`);
         return;
@@ -139,44 +139,44 @@ export function Toolbar({ project }: ToolbarProps) {
         .replace(/\s+/g, '_')
         .replace(/[^a-z0-9_]/g, '');
 
-      // Prefer rexaJson from currentLayout if available (from Code view), otherwise use rootNode
-      const publishBody: { screenName: string; rootNode?: Record<string, unknown>; rexaJson?: Record<string, unknown> } = {
+      // Prefer sduiJson from currentLayout if available (from Code view), otherwise use rootNode
+      const publishBody: { screenName: string; rootNode?: Record<string, unknown>; sduiJson?: Record<string, unknown> } = {
         screenName,
       };
 
-      if (currentLayout?.rexaJson) {
-        // If rexaJson exists (from Code view), use it directly
+      if (currentLayout?.sduiJson) {
+        // If sduiJson exists (from Code view), use it directly
         // Ensure it's an object (Prisma returns it as parsed JSON, but double-check)
-        let rexaJsonObj: Record<string, unknown>;
-        if (typeof currentLayout.rexaJson === 'string') {
+        let sduiJsonObj: Record<string, unknown>;
+        if (typeof currentLayout.sduiJson === 'string') {
           try {
-            rexaJsonObj = JSON.parse(currentLayout.rexaJson);
+            sduiJsonObj = JSON.parse(currentLayout.sduiJson);
           } catch (e) {
-            console.error('Failed to parse rexaJson string:', e);
-            alert('Invalid rexaJson format. Please check your JSON and try again.');
+            console.error('Failed to parse sduiJson string:', e);
+            alert('Invalid sduiJson format. Please check your JSON and try again.');
             setPublishing(false);
             return;
           }
-        } else if (typeof currentLayout.rexaJson === 'object' && currentLayout.rexaJson !== null && !Array.isArray(currentLayout.rexaJson)) {
-          rexaJsonObj = currentLayout.rexaJson as Record<string, unknown>;
+        } else if (typeof currentLayout.sduiJson === 'object' && currentLayout.sduiJson !== null && !Array.isArray(currentLayout.sduiJson)) {
+          sduiJsonObj = currentLayout.sduiJson as Record<string, unknown>;
         } else {
-          console.error('Invalid rexaJson type:', typeof currentLayout.rexaJson);
-          alert('Invalid rexaJson format. Please check your JSON and try again.');
+          console.error('Invalid sduiJson type:', typeof currentLayout.sduiJson);
+          alert('Invalid sduiJson format. Please check your JSON and try again.');
           setPublishing(false);
           return;
         }
         
         // Validate it's a proper object before sending
-        if (!rexaJsonObj || typeof rexaJsonObj !== 'object' || Array.isArray(rexaJsonObj)) {
-          console.error('rexaJson is not a valid object:', rexaJsonObj);
-          alert('Invalid rexaJson format. Please check your JSON and try again.');
+        if (!sduiJsonObj || typeof sduiJsonObj !== 'object' || Array.isArray(sduiJsonObj)) {
+          console.error('sduiJson is not a valid object:', sduiJsonObj);
+          alert('Invalid sduiJson format. Please check your JSON and try again.');
           setPublishing(false);
           return;
         }
         
-        publishBody.rexaJson = rexaJsonObj;
+        publishBody.sduiJson = sduiJsonObj;
       } else if (rootNode) {
-        // Otherwise, use rootNode (from Design view) which will be converted to REXA on server
+        // Otherwise, use rootNode (from Design view) which will be converted to SDUI on server
         publishBody.rootNode = rootNode;
       } else {
         alert('Nothing to publish. Add content to the layout first.');

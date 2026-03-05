@@ -9,8 +9,8 @@ import {
 } from '@/lib/api-response';
 import { z } from 'zod';
 import type { AuthenticatedRequest } from '@/lib/api-middleware';
-import { validateRexaJson } from '@/lib/rexa/validation';
-import { builderRootToRexaJson } from '@/lib/builderToRexa';
+import { validateSduiJson } from '@/lib/sdui/validation';
+import { builderRootToSduiJson } from '@/lib/builderToSdui';
 import type { LayoutNode } from '@/types';
 
 const publishSchema = z.object({
@@ -20,8 +20,8 @@ const publishSchema = z.object({
     .max(100)
     .regex(/^[a-z0-9_-]+$/, 'Screen name must be lowercase alphanumeric with _ or -')
     .optional(),
-  rexaJson: z.record(z.unknown()).optional(),
-  rootNode: z.record(z.unknown()).optional(), // Builder tree; converted to REXA on server
+  sduiJson: z.record(z.unknown()).optional(),
+  rootNode: z.record(z.unknown()).optional(), // Builder tree; converted to SDUI on server
 });
 
 async function publishLayout(request: AuthenticatedRequest) {
@@ -57,84 +57,84 @@ async function publishLayout(request: AuthenticatedRequest) {
       return forbiddenResponse('You do not have permission to publish this layout');
     }
 
-    // Resolve the REXA JSON: prefer rexaJson, else convert rootNode (builder) to REXA, else stored
-    let rexaJsonRaw: Record<string, unknown> | null = null;
+    // Resolve the SDUI JSON: prefer sduiJson, else convert rootNode (builder) to SDUI, else stored
+    let sduiJsonRaw: Record<string, unknown> | null = null;
 
-    // First, try to get rexaJson from request body
-    if (parsed.data.rexaJson) {
-      const rexaJsonValue = parsed.data.rexaJson;
+    // First, try to get sduiJson from request body
+    if (parsed.data.sduiJson) {
+      const sduiJsonValue = parsed.data.sduiJson;
       // Handle both string and object formats
-      if (typeof rexaJsonValue === 'string') {
+      if (typeof sduiJsonValue === 'string') {
         try {
-          rexaJsonRaw = JSON.parse(rexaJsonValue) as Record<string, unknown>;
+          sduiJsonRaw = JSON.parse(sduiJsonValue) as Record<string, unknown>;
         } catch (e) {
-          return errorResponse('Invalid rexaJson format: ' + (e as Error).message, 400);
+          return errorResponse('Invalid sduiJson format: ' + (e as Error).message, 400);
         }
-      } else if (typeof rexaJsonValue === 'object' && rexaJsonValue !== null && !Array.isArray(rexaJsonValue)) {
-        rexaJsonRaw = rexaJsonValue as Record<string, unknown>;
+      } else if (typeof sduiJsonValue === 'object' && sduiJsonValue !== null && !Array.isArray(sduiJsonValue)) {
+        sduiJsonRaw = sduiJsonValue as Record<string, unknown>;
       }
     }
 
-    // If no rexaJson in request, try converting rootNode
-    if (!rexaJsonRaw && parsed.data.rootNode) {
+    // If no sduiJson in request, try converting rootNode
+    if (!sduiJsonRaw && parsed.data.rootNode) {
       try {
-        rexaJsonRaw = builderRootToRexaJson(parsed.data.rootNode as LayoutNode);
+        sduiJsonRaw = builderRootToSduiJson(parsed.data.rootNode as LayoutNode);
       } catch (e) {
         return errorResponse(
-          'Failed to convert layout to REXA format: ' + (e as Error).message,
+          'Failed to convert layout to SDUI format: ' + (e as Error).message,
           422
         );
       }
     }
 
-    // Fallback to stored rexaJson
-    if (!rexaJsonRaw && layout.rexaJson) {
-      const storedRexaJson = layout.rexaJson;
-      if (typeof storedRexaJson === 'string') {
+    // Fallback to stored sduiJson
+    if (!sduiJsonRaw && layout.sduiJson) {
+      const storedSduiJson = layout.sduiJson;
+      if (typeof storedSduiJson === 'string') {
         try {
-          rexaJsonRaw = JSON.parse(storedRexaJson) as Record<string, unknown>;
+          sduiJsonRaw = JSON.parse(storedSduiJson) as Record<string, unknown>;
         } catch (e) {
-          return errorResponse('Invalid stored rexaJson format: ' + (e as Error).message, 500);
+          return errorResponse('Invalid stored sduiJson format: ' + (e as Error).message, 500);
         }
-      } else if (typeof storedRexaJson === 'object' && storedRexaJson !== null && !Array.isArray(storedRexaJson)) {
-        rexaJsonRaw = storedRexaJson as Record<string, unknown>;
+      } else if (typeof storedSduiJson === 'object' && storedSduiJson !== null && !Array.isArray(storedSduiJson)) {
+        sduiJsonRaw = storedSduiJson as Record<string, unknown>;
       }
     }
 
-    if (!rexaJsonRaw) {
+    if (!sduiJsonRaw) {
       return errorResponse(
-        'No layout to publish. Save the layout or provide rexaJson or rootNode in the request body.',
+        'No layout to publish. Save the layout or provide sduiJson or rootNode in the request body.',
         400
       );
     }
 
-    // Ensure rexaJsonRaw is a valid object before validation
-    if (!rexaJsonRaw || typeof rexaJsonRaw !== 'object' || Array.isArray(rexaJsonRaw)) {
+    // Ensure sduiJsonRaw is a valid object before validation
+    if (!sduiJsonRaw || typeof sduiJsonRaw !== 'object' || Array.isArray(sduiJsonRaw)) {
       return errorResponse(
-        `Invalid rexaJson format: expected an object, got ${rexaJsonRaw === null ? 'null' : Array.isArray(rexaJsonRaw) ? 'array' : typeof rexaJsonRaw}`,
+        `Invalid sduiJson format: expected an object, got ${sduiJsonRaw === null ? 'null' : Array.isArray(sduiJsonRaw) ? 'array' : typeof sduiJsonRaw}`,
         400
       );
     }
 
     // Server-side validation (depth, node count, required type field)
     // Log for debugging
-    console.log('[Publish] Validating rexaJson:', {
-      type: typeof rexaJsonRaw,
-      isArray: Array.isArray(rexaJsonRaw),
-      hasType: 'type' in rexaJsonRaw,
-      typeValue: (rexaJsonRaw as Record<string, unknown>).type,
-      keys: Object.keys(rexaJsonRaw).slice(0, 10),
-      sample: JSON.stringify(rexaJsonRaw).substring(0, 500),
+    console.log('[Publish] Validating sduiJson:', {
+      type: typeof sduiJsonRaw,
+      isArray: Array.isArray(sduiJsonRaw),
+      hasType: 'type' in sduiJsonRaw,
+      typeValue: (sduiJsonRaw as Record<string, unknown>).type,
+      keys: Object.keys(sduiJsonRaw).slice(0, 10),
+      sample: JSON.stringify(sduiJsonRaw).substring(0, 500),
     });
     
-    const validation = validateRexaJson(rexaJsonRaw);
+    const validation = validateSduiJson(sduiJsonRaw);
     if (!validation.valid) {
       console.error('[Publish] Validation failed:', validation.error, {
         nodeCount: validation.nodeCount,
         unknownTypes: validation.unknownTypes,
         warnings: validation.warnings,
       });
-      return errorResponse(`REXA JSON validation failed: ${validation.error}`, 422);
+      return errorResponse(`SDUI JSON validation failed: ${validation.error}`, 422);
     }
 
     const screenName = parsed.data.screenName ?? layout.screenName ?? layout.name
@@ -158,7 +158,7 @@ async function publishLayout(request: AuthenticatedRequest) {
         projectId: layout.projectId,
         screenName,
         version: newVersion,
-        rexaJson: rexaJsonRaw as Prisma.InputJsonValue,
+        sduiJson: sduiJsonRaw as Prisma.InputJsonValue,
         publishedAt,
         publishedBy: request.user?.id,
         isActive: true,
@@ -173,7 +173,7 @@ async function publishLayout(request: AuthenticatedRequest) {
         isPublished: true,
         publishedAt,
         version: newVersion,
-        rexaJson: rexaJsonRaw as Prisma.InputJsonValue,
+        sduiJson: sduiJsonRaw as Prisma.InputJsonValue,
       },
     });
 

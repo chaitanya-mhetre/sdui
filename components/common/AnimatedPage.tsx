@@ -16,9 +16,11 @@ export function AnimatedPage({ children, className = '' }: AnimatedPageProps) {
       animate="visible"
       exit="exit"
       variants={pageTransitionVariants}
-      className={className}
+      style={{ willChange: 'opacity, transform' }}
     >
-      {children}
+      <div className={className}>
+        {children}
+      </div>
     </motion.div>
   );
 }

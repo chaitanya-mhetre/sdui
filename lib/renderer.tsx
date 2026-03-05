@@ -2,8 +2,8 @@ import React from 'react';
 import { LayoutNode, ComponentDefinition } from '@/types';
 import { getComponentDefinition } from './componentRegistry';
 
-/** Map REXA / lowercase / snake_case type names to builder registry ids */
-const REXA_TYPE_TO_REGISTRY: Record<string, string> = {
+/** Map SDUI / lowercase / snake_case type names to builder registry ids */
+const SDUI_TYPE_TO_REGISTRY: Record<string, string> = {
   scaffold: 'Scaffold',
   app_bar: 'AppBar',
   row: 'HStack',
@@ -18,7 +18,7 @@ const REXA_TYPE_TO_REGISTRY: Record<string, string> = {
 };
 
 function normalizeComponentType(type: string): string {
-  return REXA_TYPE_TO_REGISTRY[type] ?? type;
+  return SDUI_TYPE_TO_REGISTRY[type] ?? type;
 }
 
 interface RendererProps {
@@ -192,7 +192,7 @@ function PlatformComponentBlock({
         onNodeClick?.(node.id);
       }}
       title={componentDef.name}
-      className={`flex flex-col ${paddingClass} ${gapClass} ${radiusClass} ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+      className={`flex flex-col ${paddingClass} ${gapClass} ${radiusClass} ${isSelected ? 'ring-2 ring-primary' : ''}`}
       style={{ backgroundColor, width, height }}
     >
       <span className="text-xs text-muted-foreground mb-1">[{componentDef.name}]</span>
@@ -240,7 +240,7 @@ function LayoutContainer({
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
-      className={`flex ${flexDirection} ${paddingClass} ${gapClass} ${radiusClass} ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+      className={`flex ${flexDirection} ${paddingClass} ${gapClass} ${radiusClass} ${isSelected ? 'ring-2 ring-primary' : ''}`}
       style={{
         backgroundColor,
         width,
@@ -283,7 +283,7 @@ function TextComponent({
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
-      className={`${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+      className={`${isSelected ? 'ring-2 ring-primary' : ''}`}
       style={{
         fontSize: `${fontSize}px`,
         fontWeight: fontWeight === '600' ? 600 : fontWeight === 'bold' ? 'bold' : 'normal',
@@ -314,7 +314,7 @@ function IconComponent({
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
-      className={`inline-flex items-center justify-center ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+      className={`inline-flex items-center justify-center ${isSelected ? 'ring-2 ring-primary' : ''}`}
       style={{ width: size, height: size, color }}
       title={name}
     >
@@ -346,7 +346,7 @@ function ImageComponent({
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
-      className={`${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+      className={`${isSelected ? 'ring-2 ring-primary' : ''}`}
       style={{ width, height, overflow: 'hidden' }}
     >
       {src ? (
@@ -384,10 +384,10 @@ function ButtonComponent({
   const isSelected = selectedNodeId === node.id;
 
   const variantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700',
-    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300',
-    outline: 'border-2 border-gray-300 text-gray-900 hover:bg-gray-50',
-    ghost: 'text-gray-900 hover:bg-gray-100',
+    primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
+    secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+    outline: 'border-2 border-border text-foreground hover:bg-muted',
+    ghost: 'text-foreground hover:bg-muted',
   };
 
   const sizeClasses = {
@@ -403,7 +403,7 @@ function ButtonComponent({
         onNodeClick?.(node.id);
       }}
       disabled={disabled || !isInteractive}
-      className={`rounded-md font-medium transition-colors ${variantClasses[variant as keyof typeof variantClasses] || variantClasses.primary} ${sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md} ${isSelected ? 'ring-2 ring-blue-500' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      className={`rounded-md font-medium transition-colors ${variantClasses[variant as keyof typeof variantClasses] || variantClasses.primary} ${sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md} ${isSelected ? 'ring-2 ring-primary' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {label}
     </button>
@@ -432,7 +432,7 @@ function TextInputComponent({
         onNodeClick?.(node.id);
       }}
       style={{ width }}
-      className={isSelected ? 'ring-2 ring-blue-500 rounded' : ''}
+      className={isSelected ? 'ring-2 ring-primary rounded' : ''}
     >
       {label && (
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -444,7 +444,7 @@ function TextInputComponent({
         type="text"
         placeholder={placeholder}
         disabled={disabled}
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
         onClick={(e) => e.stopPropagation()}
       />
     </div>
@@ -473,7 +473,7 @@ function TextAreaComponent({
         onNodeClick?.(node.id);
       }}
       style={{ width }}
-      className={isSelected ? 'ring-2 ring-blue-500 rounded' : ''}
+      className={isSelected ? 'ring-2 ring-primary rounded' : ''}
     >
       {label && (
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -484,7 +484,7 @@ function TextAreaComponent({
       <textarea
         placeholder={placeholder}
         rows={rows}
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
         onClick={(e) => e.stopPropagation()}
       />
     </div>

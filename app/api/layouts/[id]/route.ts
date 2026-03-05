@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db';
 import { successResponse, notFoundResponse, forbiddenResponse, errorResponse, validationErrorResponse, serverErrorResponse } from '@/lib/api-response';
 import { z } from 'zod';
 import type { AuthenticatedRequest } from '@/lib/api-middleware';
-import { validateRexaJson } from '@/lib/rexa/validation';
+import { validateSduiJson } from '@/lib/sdui/validation';
 
 const updateLayoutSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -14,7 +14,7 @@ const updateLayoutSchema = z.object({
     .regex(/^[a-z0-9_-]*$/, 'Screen name must be lowercase alphanumeric with _ or -')
     .optional(),
   rootNode: z.record(z.unknown(), z.unknown()).optional(),
-  rexaJson: z.record(z.unknown(), z.unknown()).optional(),
+  sduiJson: z.record(z.unknown(), z.unknown()).optional(),
   version: z.number().int().positive().optional(),
 });
 
@@ -97,30 +97,30 @@ async function updateLayout(request: AuthenticatedRequest) {
       return forbiddenResponse('You do not have permission to update this layout');
     }
 
-    // Validate rexaJson if provided (REXA format validation)
-    if (validationResult.data.rexaJson) {
-      // Ensure rexaJson is an object
-      let rexaJsonToValidate = validationResult.data.rexaJson;
-      if (typeof rexaJsonToValidate === 'string') {
+    // Validate sduiJson if provided (SDUI format validation)
+    if (validationResult.data.sduiJson) {
+      // Ensure sduiJson is an object
+      let sduiJsonToValidate = validationResult.data.sduiJson;
+      if (typeof sduiJsonToValidate === 'string') {
         try {
-          rexaJsonToValidate = JSON.parse(rexaJsonToValidate);
+          sduiJsonToValidate = JSON.parse(sduiJsonToValidate);
         } catch (e) {
-          return errorResponse(`Invalid rexaJson format: ${(e as Error).message}`, 400);
+          return errorResponse(`Invalid sduiJson format: ${(e as Error).message}`, 400);
         }
       }
       
-      if (typeof rexaJsonToValidate !== 'object' || Array.isArray(rexaJsonToValidate)) {
-        return errorResponse('rexaJson must be an object', 400);
+      if (typeof sduiJsonToValidate !== 'object' || Array.isArray(sduiJsonToValidate)) {
+        return errorResponse('sduiJson must be an object', 400);
       }
       
-      const rexaValidation = validateRexaJson(rexaJsonToValidate);
-      if (!rexaValidation.valid) {
-        return errorResponse(`REXA JSON validation failed: ${rexaValidation.error}`, 422);
+      const sduiValidation = validateSduiJson(sduiJsonToValidate);
+      if (!sduiValidation.valid) {
+        return errorResponse(`SDUI JSON validation failed: ${sduiValidation.error}`, 422);
       }
     }
 
     // Note: rootNode is in builder format (componentType, props, children)
-    // and should NOT be validated as REXA JSON. It will be converted to REXA
+    // and should NOT be validated as SDUI JSON. It will be converted to SDUI
     // format during publish, at which point it will be validated.
 
     // Increment version if rootNode is updated

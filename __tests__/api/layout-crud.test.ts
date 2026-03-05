@@ -13,8 +13,8 @@ vi.mock('@/lib/env', () => ({ env: {} }));
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn().mockResolvedValue({ userId: null }) }));
 vi.mock('@/lib/clerk-auth', () => ({ getClerkUser: vi.fn() }));
 vi.mock('@/lib/db', () => ({ prisma: mockPrisma, Prisma: {} }));
-vi.mock('@/lib/rexa/validation', () => ({
-  validateRexaJson: vi.fn(() => ({ valid: true })),
+vi.mock('@/lib/sdui/validation', () => ({
+  validateSduiJson: vi.fn(() => ({ valid: true })),
 }));
 
 const mockGetUserByApiKey = vi.hoisted(() => vi.fn());
@@ -91,8 +91,8 @@ describe('Layout ownership checks', () => {
     mockPrisma.layout.findUnique.mockResolvedValue(mockLayout);
     mockGetUserByApiKey.mockResolvedValue(ownerUser);
 
-    const { validateRexaJson } = await import('@/lib/rexa/validation');
-    vi.mocked(validateRexaJson).mockReturnValue({ valid: false, error: 'Exceeded max depth of 20' } as any);
+    const { validateSduiJson } = await import('@/lib/sdui/validation');
+    vi.mocked(validateSduiJson).mockReturnValue({ valid: false, error: 'Exceeded max depth of 20' } as any);
 
     const req = new NextRequest('http://localhost/api/layouts/layout-1', {
       method: 'PATCH',

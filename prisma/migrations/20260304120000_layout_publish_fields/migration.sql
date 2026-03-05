@@ -1,6 +1,6 @@
--- AlterTable: Add publish fields and REXA JSON to layouts
+-- AlterTable: Add publish fields and SDUI JSON to layouts
 ALTER TABLE "layouts" ADD COLUMN "screenName" TEXT;
-ALTER TABLE "layouts" ADD COLUMN "rexaJson" JSONB;
+ALTER TABLE "layouts" ADD COLUMN "sduiJson" JSONB;
 ALTER TABLE "layouts" ADD COLUMN "isPublished" BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE "layouts" ADD COLUMN "publishedAt" TIMESTAMP(3);
 

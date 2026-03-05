@@ -7,7 +7,7 @@ import { useBuilderStore } from '@/store/builderStore';
 import { nanoid } from 'nanoid';
 import { apiRequest } from '@/lib/api-client';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { DEFAULT_REXA_JSON } from '@/lib/rexa/defaultLayout';
+import { DEFAULT_SDUI_JSON } from '@/lib/sdui/defaultLayout';
 import type { Layout, LayoutNode } from '@/types';
 
 interface DbLayout {
@@ -16,7 +16,7 @@ interface DbLayout {
   name: string;
   screenName: string | null;
   rootNode: Record<string, unknown>;
-  rexaJson: Record<string, unknown> | null;
+  sduiJson: Record<string, unknown> | null;
   version: number;
   isPublished: boolean;
   publishedAt: string | null;
@@ -40,7 +40,7 @@ function buildDefaultRootNode(): LayoutNode {
       {
         id: nanoid(),
         componentType: 'Text',
-        props: { text: 'Welcome to REXA', fontSize: 32, fontWeight: 'bold', color: '#000000' },
+        props: { text: 'Welcome to SDUI', fontSize: 32, fontWeight: 'bold', color: '#000000' },
         children: [],
       },
       {
@@ -119,7 +119,7 @@ export default function EditorPage({ params }: { params: Promise<{ projectId: st
               name: 'Home Screen',
               screenName: 'home',
               rootNode: buildDefaultRootNode(),
-              rexaJson: JSON.parse(DEFAULT_REXA_JSON),
+              sduiJson: JSON.parse(DEFAULT_SDUI_JSON),
             }),
           }
         );
@@ -186,7 +186,7 @@ export default function EditorPage({ params }: { params: Promise<{ projectId: st
             name,
             screenName,
             rootNode: buildDefaultRootNode(),
-            rexaJson: JSON.parse(DEFAULT_REXA_JSON),
+            sduiJson: JSON.parse(DEFAULT_SDUI_JSON),
           }),
         }
       );

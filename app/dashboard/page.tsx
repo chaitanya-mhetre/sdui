@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Plus, Loader2, LayoutGrid, Tag } from 'lucide-react';
+import { ArrowRight, Plus, Loader2, LayoutGrid, Tag, Activity, Cpu, Zap, Box, Globe, Shield } from 'lucide-react';
 import { apiRequest } from '@/lib/api-client';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface User {
   id: string;
@@ -60,21 +61,17 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    // Wait for Clerk to load, then check authentication
     if (!isLoaded) return;
-    
     if (!isSignedIn || !userId) {
       router.push('/login');
       return;
     }
-
     loadDashboardData();
   }, [isLoaded, isSignedIn, userId, router]);
 
   async function loadDashboardData() {
     setLoading(true);
     try {
-      // Load user data
       const userResponse = await apiRequest<{ user: User }>('/auth/me');
       if (!mountedRef.current) return;
       if (!userResponse.success) {
@@ -88,7 +85,6 @@ export default function DashboardPage() {
       }
       setUser(userResponse.data.user);
 
-      // Load projects
       const projectsResponse = await apiRequest<{
         projects: Project[];
         pagination: { total: number };
@@ -106,7 +102,6 @@ export default function DashboardPage() {
         });
       }
 
-      // Load platform components from DB (PUBLIC/BETA)
       const componentsResponse = await apiRequest<{ components: DashboardComponent[] }>('/components');
       if (!mountedRef.current) return;
       if (componentsResponse.success) {
@@ -125,139 +120,170 @@ export default function DashboardPage() {
     }
   }
 
-  // Show loading while Clerk is initializing or data is loading
   if (!isLoaded || loading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        <div className="flex flex-col items-center gap-6">
+          <Loader2 className="w-12 h-12 animate-spin text-emerald-500" />
+          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500/60">Fetching_System_State...</span>
+        </div>
       </div>
     );
   }
 
-  // If not signed in, this will be handled by the useEffect redirect
-  if (!isSignedIn) {
-    return null;
-  }
+  if (!isSignedIn) return null;
 
   return (
-    <div className="p-8 space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">
-            Welcome back, {user?.name || user?.email || 'User'}
+    <div className="space-y-12 pb-20">
+      {/* Header Cluster */}
+      <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Live_Dashboard_v4</span>
+          </div>
+          <h1 className="text-4xl font-black uppercase tracking-tight text-white leading-tight">
+            Control <span className="text-emerald-500 italic">Plane</span> Overview
           </h1>
-          <p className="text-muted-foreground">
-            You have {stats.totalProjects} active {stats.totalProjects === 1 ? 'project' : 'projects'}
+          <p className="text-zinc-500 text-sm font-semibold uppercase tracking-widest">
+            Welcome back, operator <span className="text-zinc-300">[{user?.name || user?.email}]</span>
           </p>
         </div>
         <Link href="/dashboard/projects/new">
-          <Button className="gap-2 rounded-lg">
-            <Plus className="w-5 h-5" />
-            New Project
+          <Button className="bg-emerald-500 text-black hover:bg-emerald-400 font-black uppercase tracking-widest text-[10px] h-12 px-8 rounded-xl shadow-[0_0_30px_rgba(16,185,129,0.2)] active:scale-95 transition-all gap-3">
+            <Plus className="w-4 h-4" />
+            Initialize Project
           </Button>
         </Link>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid md:grid-cols-4 gap-4">
-        <div className="bg-card border border-border p-6 rounded-lg hover:border-primary/50 transition-colors">
-          <p className="text-muted-foreground text-sm mb-2">Total Projects</p>
-          <p className="text-3xl font-bold">{stats.totalProjects}</p>
-        </div>
-        <div className="bg-card border border-border p-6 rounded-lg hover:border-primary/50 transition-colors">
-          <p className="text-muted-foreground text-sm mb-2">Total Layouts</p>
-          <p className="text-3xl font-bold">{stats.totalLayouts}</p>
-        </div>
-        <div className="bg-card border border-border p-6 rounded-lg hover:border-primary/50 transition-colors">
-          <p className="text-muted-foreground text-sm mb-2">Plan</p>
-          <p className="text-3xl font-bold capitalize">{user?.plan || 'Free'}</p>
-        </div>
-        <div className="bg-card border border-border p-6 rounded-lg hover:border-primary/50 transition-colors">
-          <p className="text-muted-foreground text-sm mb-2">API Calls</p>
-          <p className="text-3xl font-bold">{stats.totalApiCalls}</p>
-        </div>
+      {/* Stats Topology */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: "Active Projects", value: stats.totalProjects, icon: Box, color: "emerald" },
+          { label: "Synced Layouts", value: stats.totalLayouts, icon: Zap, color: "emerald" },
+          { label: "Propagation Delay", value: "14ms", icon: Activity, color: "emerald" },
+          { label: "Plan Status", value: user?.plan || 'Free', icon: Shield, color: "emerald" }
+        ].map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className="p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.05] hover:border-emerald-500/30 transition-all group relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-opacity">
+              <stat.icon className="w-8 h-8 text-emerald-500" />
+            </div>
+            <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-2">{stat.label}</p>
+            <p className="text-3xl font-black uppercase tracking-tighter text-white italic">{stat.value}</p>
+          </motion.div>
+        ))}
       </div>
 
-      {/* Recent Projects */}
-      <div>
-        <h2 className="text-xl font-bold mb-4">Recent Projects</h2>
+      {/* Primary Workspace: Projects */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <div className="h-0.5 w-8 bg-emerald-500" />
+          <h2 className="text-xl font-black uppercase tracking-widest text-white italic">Recent Projects</h2>
+        </div>
+
         {projects.length === 0 ? (
-          <div className="bg-card border border-border rounded-lg p-12 text-center">
-            <p className="text-muted-foreground mb-6 text-lg">No projects yet</p>
+          <div className="bg-white/[0.02] border border-white/[0.05] rounded-[3rem] p-24 text-center group cursor-pointer hover:bg-white/[0.03] transition-all border-dashed">
+            <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center mx-auto mb-8 group-hover:scale-110 transition-transform">
+              <Plus className="w-8 h-8 text-zinc-500" />
+            </div>
+            <p className="text-zinc-500 font-black uppercase tracking-widest text-sm mb-10 italic">No mission data available</p>
             <Link href="/dashboard/projects/new">
-              <Button className="gap-2 rounded-lg" size="lg">
-                <Plus className="w-5 h-5" />
-                Create Your First Project
+              <Button size="lg" className="bg-white text-black hover:bg-emerald-400 font-black uppercase tracking-widest text-xs h-14 px-12 rounded-2xl shadow-2xl transition-all active:scale-95">
+                START_YOUR_FIRST_MISSION
               </Button>
             </Link>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project) => (
-              <Link key={project.id} href={`/dashboard/editor/${project.id}`}>
-                <div className="bg-card border border-border rounded-lg p-6 hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer group">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {projects.map((project, idx) => (
+              <motion.div
+                key={project.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3 + idx * 0.05 }}
+              >
+                <Link href={`/dashboard/editor/${project.id}`}>
+                  <div className="h-full bg-[#0b0b0d] border border-white/[0.08] rounded-[2rem] p-8 hover:border-emerald-500/40 hover:shadow-[0_40px_80px_-12px_rgba(0,0,0,0.8)] transition-all cursor-pointer group flex flex-col justify-between relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8 text-emerald-500/5 group-hover:text-emerald-500/20 transition-colors">
+                      <Cpu className="w-12 h-12" />
+                    </div>
+                    <div>
+                      <div className="flex items-end justify-between mb-8">
+                        <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.1] flex items-center justify-center group-hover:bg-emerald-500/10 group-hover:border-emerald-500/20 transition-all">
+                          <Box className="w-6 h-6 text-zinc-500 group-hover:text-emerald-500" />
+                        </div>
+                        <ArrowRight className="w-6 h-6 text-zinc-700 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
+                      </div>
+                      <h3 className="text-xl font-black uppercase tracking-tight text-white mb-4 italic group-hover:text-emerald-400 transition-colors">
                         {project.name}
                       </h3>
                       {project.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                        <p className="text-sm text-zinc-500 font-medium leading-relaxed line-clamp-2 italic">
                           {project.description}
                         </p>
                       )}
                     </div>
-                    <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                    <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-widest text-zinc-600 pt-8 mt-8 border-t border-white/[0.05]">
+                      <span className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/40" />
+                        {project.layoutCount || 0} Layouts
+                      </span>
+                      <span>•</span>
+                      <span className="group-hover:text-zinc-400 transition-colors">
+                        UP_ {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground pt-4 border-t border-border">
-                    <span>{project.layoutCount || 0} layouts</span>
-                    <span>•</span>
-                    <span>Updated {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })}</span>
-                  </div>
-                </div>
-              </Link>
+                </Link>
+              </motion.div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Available Components (from DB) */}
-      <div>
-        <h2 className="text-xl font-bold mb-4">Available Components</h2>
+      {/* Platform Protocol: Components */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <div className="h-0.5 w-8 bg-emerald-500" />
+          <h2 className="text-xl font-black uppercase tracking-widest text-white italic">Platform Registry</h2>
+        </div>
+
         {components.length === 0 ? (
-          <div className="bg-card border border-border rounded-lg p-12 text-center">
-            <LayoutGrid className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No components available yet. Components are added by the platform and will appear here.</p>
+          <div className="bg-white/[0.02] border border-white/[0.05] rounded-3xl p-12 text-center">
+            <LayoutGrid className="w-10 h-10 mx-auto text-zinc-700 mb-6" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 italic">No external component nodes detected</p>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {components.map((comp) => (
               <div
                 key={comp.id}
-                className="bg-card border border-border rounded-lg p-4 hover:border-primary/50 transition-colors"
+                className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 hover:bg-white/[0.05] transition-all group"
               >
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-md bg-muted">
-                    <LayoutGrid className="w-5 h-5 text-muted-foreground" />
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-xl bg-black border border-white/5 group-hover:scale-110 transition-transform">
+                    <LayoutGrid className="w-5 h-5 text-zinc-500 group-hover:text-emerald-500" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate">{comp.name}</h3>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                        <Tag className="w-3.5 h-3.5" />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-black uppercase tracking-tight text-white mb-2 group-hover:text-emerald-400 truncate">{comp.name}</h3>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded bg-white/5 text-zinc-500 group-hover:text-zinc-300">
+                        <Tag className="w-3 h-3" />
                         {comp.category}
                       </span>
-                      <span className="text-xs text-muted-foreground">v{comp.version}</span>
-                      {comp.visibility !== 'PUBLIC' && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-400">
-                          {comp.visibility}
-                        </span>
-                      )}
+                      <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded bg-emerald-500/10 text-emerald-500">v{comp.version}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {comp.usageCount} use{comp.usageCount !== 1 ? 's' : ''}
-                    </p>
+                    <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-[0.2em] text-zinc-600">
+                      <span>{comp.usageCount} Deployments</span>
+                      <span className="text-emerald-500/60">{comp.visibility}</span>
+                    </div>
                   </div>
                 </div>
               </div>

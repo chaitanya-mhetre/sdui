@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Plus, MoreVertical, Loader2, Trash2, Copy, Check } from 'lucide-react';
+import { Plus, MoreVertical, Loader2, Trash2, Copy, Check, Layout, Clock, Globe, Shield, Terminal } from 'lucide-react';
 import { apiRequest } from '@/lib/api-client';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,14 +39,11 @@ export default function ProjectsPage() {
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Wait for Clerk to load, then check authentication
     if (!isLoaded) return;
-    
     if (!isSignedIn || !userId) {
       router.push('/login');
       return;
     }
-
     loadProjects();
   }, [isLoaded, isSignedIn, userId, router]);
 
@@ -56,9 +54,8 @@ export default function ProjectsPage() {
         projects: Project[];
         pagination: { total: number };
       }>('/projects');
-      
+
       if (!response.success) {
-        // Don't redirect - just show error
         toast({
           title: 'Error',
           description: response.message || 'Failed to load projects',
@@ -67,7 +64,6 @@ export default function ProjectsPage() {
         setLoading(false);
         return;
       }
-
       setProjects(response.data.projects);
     } catch (error) {
       console.error('Failed to load projects:', error);
@@ -105,8 +101,6 @@ export default function ProjectsPage() {
         title: 'Success',
         description: 'Project deleted successfully',
       });
-
-      // Reload projects
       await loadProjects();
     } catch (error) {
       console.error('Failed to delete project:', error);
@@ -123,7 +117,7 @@ export default function ProjectsPage() {
   async function handleCopyApiKey(apiKey: string, projectId: string, e?: React.MouseEvent) {
     e?.preventDefault();
     e?.stopPropagation();
-    
+
     if (!apiKey) {
       toast({
         title: 'Error',
@@ -138,179 +132,184 @@ export default function ProjectsPage() {
       setCopiedKeyId(projectId);
       toast({
         title: 'Copied!',
-        description: 'API key copied to clipboard',
+        description: 'API key copied successfully',
       });
       setTimeout(() => setCopiedKeyId(null), 2000);
     } catch (error) {
-      // Fallback for older browsers
-      try {
-        const textArea = document.createElement('textarea');
-        textArea.value = apiKey;
-        textArea.style.position = 'fixed';
-        textArea.style.opacity = '0';
-        textArea.style.left = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        const successful = document.execCommand('copy');
-        document.body.removeChild(textArea);
-        
-        if (successful) {
-          setCopiedKeyId(projectId);
-          toast({
-            title: 'Copied!',
-            description: 'API key copied to clipboard',
-          });
-          setTimeout(() => setCopiedKeyId(null), 2000);
-        } else {
-          throw new Error('execCommand failed');
-        }
-      } catch (fallbackError) {
-        toast({
-          title: 'Error',
-          description: 'Failed to copy API key. Please copy manually.',
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: 'Error',
+        description: 'Failed to copy API key',
+        variant: 'destructive',
+      });
     }
   }
 
-  // Show loading while Clerk is initializing or data is loading
   if (!isLoaded || loading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        <div className="flex flex-col items-center gap-6">
+          <Loader2 className="w-12 h-12 animate-spin text-emerald-500" />
+          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500/60 text-center">Materializing_Project_Registry...</span>
+        </div>
       </div>
     );
   }
 
-  // If not signed in, this will be handled by the useEffect redirect
-  if (!isSignedIn) {
-    return null;
-  }
-
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Projects</h1>
-          <p className="text-muted-foreground">Manage and view all your projects</p>
+    <div className="space-y-12 pb-20">
+      {/* Header Cluster */}
+      <motion.div
+        className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Layout className="w-4 h-4 text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 italic">Central Deployment Hub</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-white leading-tight">
+            Active <span className="text-emerald-500 italic">Projects</span>
+          </h1>
+          <p className="text-zinc-500 text-xs font-black uppercase tracking-[0.2em]">Manage your global UI nodes // Total: {projects.length}</p>
         </div>
         <Link href="/dashboard/projects/new">
-          <Button className="gap-2 rounded-lg">
-            <Plus className="w-5 h-5" />
-            New Project
-          </Button>
+          <button className="group relative px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all active:scale-95 shadow-[0_20px_40px_rgba(16,185,129,0.2)] flex items-center gap-3">
+            <Plus className="w-4 h-4" />
+            Create_New_Node
+          </button>
         </Link>
-      </div>
+      </motion.div>
 
       {/* Projects Grid */}
-      {projects.length === 0 ? (
-        <div className="bg-card border border-border rounded-lg p-12 text-center">
-          <p className="text-muted-foreground mb-4 text-lg">No projects yet</p>
-          <p className="text-sm text-muted-foreground mb-6">
-            Create your first project to start building amazing UIs
-          </p>
-          <Link href="/dashboard/projects/new">
-            <Button className="gap-2 rounded-lg">
-              <Plus className="w-5 h-5" />
-              Create Your First Project
-            </Button>
-          </Link>
-        </div>
-      ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
-            <div
-              key={project.id}
-              className="bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition group"
-            >
-              {/* Project Image */}
-              <div className="h-40 bg-muted flex items-center justify-center">
-                <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10"></div>
-              </div>
-
-              {/* Project Info */}
-              <div className="p-6">
-                <h3 className="font-semibold text-lg mb-1">{project.name}</h3>
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                  {project.description || 'No description'}
-                </p>
-
-                {/* API Key */}
-                {project.apiKey && (
-                  <div className="mb-4 p-2 bg-muted/50 rounded-md border border-border">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-muted-foreground mb-1">API Key</p>
-                        <p className="text-xs font-mono text-foreground truncate">
-                          {project.apiKey}
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 shrink-0"
-                        onClick={(e) => handleCopyApiKey(project.apiKey!, project.id, e)}
-                        type="button"
-                      >
-                        {copiedKeyId === project.id ? (
-                          <Check className="w-3.5 h-3.5 text-green-500" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs text-muted-foreground">
-                    {project.layoutCount || 0} layouts
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })}
-                  </span>
+      <AnimatePresence mode="popLayout">
+        {projects.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-16 rounded-[3rem] border border-white/[0.08] bg-white/[0.02] flex flex-col items-center justify-center text-center backdrop-blur-3xl"
+          >
+            <div className="w-20 h-20 rounded-[2rem] bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-10">
+              <Plus className="w-10 h-10 text-emerald-500" />
+            </div>
+            <h2 className="text-2xl font-black uppercase tracking-tight text-white mb-4 italic">Registry Empty</h2>
+            <p className="text-zinc-500 text-sm font-bold uppercase tracking-widest leading-relaxed max-w-sm mb-10">
+              Initiate your first project node to begin large-scale UI distribution.
+            </p>
+            <Link href="/dashboard/projects/new">
+              <button className="px-10 py-4 border border-white/[0.1] hover:bg-white/[0.05] text-white rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all">Initialize_Primary_Sequence</button>
+            </Link>
+          </motion.div>
+        ) : (
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              visible: { transition: { staggerChildren: 0.1 } }
+            }}
+          >
+            {projects.map((project) => (
+              <motion.div
+                key={project.id}
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 }
+                }}
+                className="group p-8 rounded-[2.5rem] bg-[#0b0b0d] border border-white/[0.08] hover:border-emerald-500/30 hover:shadow-[0_40px_80px_-12px_rgba(0,0,0,0.8)] transition-all relative overflow-hidden flex flex-col"
+              >
+                {/* Visual Accent */}
+                <div className="absolute top-0 right-0 p-8 text-emerald-500/5 group-hover:text-emerald-500/15 transition-colors">
+                  <Globe className="w-12 h-12" />
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500/60 italic">Node_Active</span>
+                  </div>
+
+                  <h3 className="text-2xl font-black uppercase tracking-tight text-white mb-3 italic truncate group-hover:text-emerald-400 transition-colors">
+                    {project.name}
+                  </h3>
+                  <p className="text-zinc-500 text-xs font-medium line-clamp-2 leading-relaxed mb-8">
+                    {project.description || 'No operational parameters defined for this node cluster.'}
+                  </p>
+
+                  {/* API Configuration */}
+                  {project.apiKey && (
+                    <div className="mb-8 p-4 rounded-2xl bg-black border border-white/[0.05] group/key">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Terminal className="w-3 h-3 text-zinc-600" />
+                          <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-600">Access_Protocol_Key</span>
+                        </div>
+                        <button
+                          onClick={(e) => handleCopyApiKey(project.apiKey!, project.id, e)}
+                          className="text-emerald-500/40 hover:text-emerald-500 transition-colors"
+                        >
+                          {copiedKeyId === project.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                      <div className="text-[10px] font-black text-zinc-400 font-mono truncate tracking-tight bg-white/[0.02] p-2 rounded-lg">
+                        {project.apiKey}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4 mb-8">
+                    <div className="space-y-1">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-zinc-600">Capacity</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-white italic">{project.layoutCount || 0}</span>
+                        <span className="text-[8px] font-black text-zinc-500 uppercase">Layouts</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-zinc-600">Last_Sync</span>
+                      <div className="flex items-center gap-2 text-zinc-500">
+                        <Clock className="w-3 h-3" />
+                        <span className="text-[8px] font-black uppercase tracking-widest truncate">
+                          {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
                   <Link href={`/dashboard/editor/${project.id}`} className="flex-1">
-                    <Button variant="default" size="sm" className="w-full rounded-lg">
-                      Edit
-                    </Button>
+                    <button className="w-full py-3.5 bg-white text-black hover:bg-emerald-400 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all active:scale-95">
+                      Configure_Control_Plane
+                    </button>
                   </Link>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="rounded-lg px-3"
-                        disabled={deletingId === project.id}
-                      >
+                      <button className="w-12 h-12 flex items-center justify-center bg-white/5 border border-white/[0.1] text-zinc-400 hover:text-white hover:bg-white/10 rounded-xl transition-all">
                         {deletingId === project.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />
                         ) : (
                           <MoreVertical className="w-4 h-4" />
                         )}
-                      </Button>
+                      </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="bg-[#0b0b0d] border-white/10 rounded-xl p-2 min-w-[160px]">
                       <DropdownMenuItem
-                        className="text-destructive"
+                        className="text-red-400 focus:text-red-400 focus:bg-red-500/10 cursor-pointer rounded-lg font-black uppercase tracking-widest text-[9px] p-3 gap-3"
                         onClick={() => handleDelete(project.id)}
                       >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Decommission_Node
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

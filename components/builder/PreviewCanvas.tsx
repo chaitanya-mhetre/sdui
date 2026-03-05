@@ -2,19 +2,19 @@
 
 import { useMemo, useRef, useEffect, useState } from 'react';
 import { DeviceFrame } from './DeviceFrame';
-import { RexaLayoutRenderer } from '@/lib/rexa/renderWidget';
-import { parseLayout } from '@/lib/rexa/layoutParser';
+import { SduiLayoutRenderer } from '@/lib/sdui/renderWidget';
+import { parseLayout } from '@/lib/sdui/layoutParser';
 import { LayoutRenderer } from '@/lib/renderer';
 import { useBuilderStore } from '@/store/builderStore';
 import { getDevicePreset } from '@/lib/devicePresets';
 import type { LayoutNode, ComponentDefinition } from '@/types';
 
 interface PreviewCanvasProps {
-  /** Builder tree (Design): when set, preview uses LayoutRenderer instead of REXA */
+  /** Builder tree (Design): when set, preview uses LayoutRenderer instead of SDUI */
   rootNode?: LayoutNode | null;
   /** Platform components for LayoutRenderer when using rootNode */
   platformComponents?: ComponentDefinition[];
-  /** REXA JSON string (only used when rootNode is not provided) */
+  /** SDUI JSON string (only used when rootNode is not provided) */
   layoutJson?: string;
   className?: string;
   /** When true the canvas fills its container and auto-scales. */
@@ -57,7 +57,7 @@ export function PreviewCanvas({
     return () => obs.disconnect();
   }, [deviceW, deviceH, fitContainer]);
 
-  const rexaParsed = useMemo(() => {
+  const sduiParsed = useMemo(() => {
     if (rootNode != null) return { node: null, error: null };
     if (!layoutJson?.trim()) return { node: null, error: null };
     const result = parseLayout(layoutJson);
@@ -102,7 +102,7 @@ export function PreviewCanvas({
                 platformComponents={platformComponents}
               />
             </div>
-          ) : rexaParsed.error ? (
+          ) : sduiParsed.error ? (
             <div
               style={{
                 padding: 12,
@@ -114,9 +114,9 @@ export function PreviewCanvas({
                 wordBreak: 'break-word',
               }}
             >
-              {rexaParsed.error}
+              {sduiParsed.error}
             </div>
-          ) : rexaParsed.node ? (
+          ) : sduiParsed.node ? (
             /*
              * Content shell — flex column so ScaffoldWidget (flex:1) fills all remaining height.
              * fontFamily/fontSize mimics the target platform's default text rendering.
@@ -133,7 +133,7 @@ export function PreviewCanvas({
                 WebkitFontSmoothing: 'antialiased',
               } as React.CSSProperties}
             >
-              <RexaLayoutRenderer node={rexaParsed.node} />
+              <SduiLayoutRenderer node={sduiParsed.node} />
             </div>
           ) : (
             <div

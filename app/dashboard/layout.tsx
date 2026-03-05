@@ -15,8 +15,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { isLoaded, isSignedIn } = useAuth();
   const [checkingRole, setCheckingRole] = useState(true);
   const [isRegularUser, setIsRegularUser] = useState(false);
-  
-  // Don't show sidebar on editor pages
+
   const isEditorPage = pathname?.includes('/editor');
 
   useEffect(() => {
@@ -32,23 +31,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         const response = await apiRequest<{ user: { role: string } }>('/auth/me');
         if (response.success && response.data?.user) {
           const role = response.data.user.role;
-          console.log('User role from /auth/me:', role);
-          // If user is admin, redirect to admin dashboard
           if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
-            console.log('User is admin, redirecting to /admin');
             router.replace('/admin');
             return;
           }
-          // Regular user, allow access to dashboard
-          console.log('User is regular user, allowing dashboard access');
           setIsRegularUser(true);
         } else {
-          // Can't verify role, allow access (will show error if needed)
           setIsRegularUser(true);
         }
       } catch (error) {
         console.error('Error checking user role:', error);
-        // On error, allow access (will show error if needed)
         setIsRegularUser(true);
       } finally {
         setCheckingRole(false);
@@ -58,37 +50,38 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     checkUserRole();
   }, [isLoaded, isSignedIn, router]);
 
-  // Show loading while checking auth or role
   if (!isLoaded || checkingRole) {
     return (
-      <div className="flex h-screen bg-background text-foreground items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      <div className="flex h-screen bg-[#050506] text-white items-center justify-center grain-texture">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 animate-spin text-emerald-500" />
+          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500/60">Initializing_Dashboard...</span>
+        </div>
       </div>
     );
   }
 
-  // If not signed in or not a regular user, don't render (will redirect)
   if (!isSignedIn || !isRegularUser) {
     return null;
   }
 
-  // Editor pages have their own layout, don't show sidebar
   if (isEditorPage) {
-    return <>{children}</>;
+    return <div className="bg-[#050506] text-white min-h-screen grain-texture">{children}</div>;
   }
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex h-screen bg-[#050506] text-white overflow-hidden grain-texture selection:bg-emerald-500/30">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
+      <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
-
-        {/* Content Area */}
-        <main className="flex-1 overflow-auto bg-background">{children}</main>
+        <main className="flex-1 overflow-auto bg-black/20 backdrop-blur-sm custom-scrollbar">
+          <div className="max-w-7xl mx-auto py-8 px-6 md:px-8 lg:px-12">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

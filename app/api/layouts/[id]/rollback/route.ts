@@ -73,7 +73,7 @@ async function rollbackLayout(request: AuthenticatedRequest) {
       prisma.layout.update({
         where: { id: layoutId },
         data: {
-          rexaJson: targetSnapshot.rexaJson as Prisma.InputJsonValue,
+          sduiJson: targetSnapshot.sduiJson as Prisma.InputJsonValue,
           version: targetSnapshot.version,
           isPublished: true,
           publishedAt: new Date(),

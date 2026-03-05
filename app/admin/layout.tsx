@@ -34,11 +34,9 @@ export default function AdminLayout({
           if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
             setIsAdmin(true);
           } else {
-            // Not an admin, redirect to user dashboard
             router.push('/dashboard');
           }
         } else {
-          // Can't verify role, redirect to user dashboard
           router.push('/dashboard');
         }
       } catch (error) {
@@ -52,30 +50,31 @@ export default function AdminLayout({
     checkAdminRole();
   }, [isLoaded, isSignedIn, router]);
 
-  // Show loading while checking auth or role
   if (!isLoaded || checkingRole) {
     return (
-      <div className="flex h-screen bg-background text-foreground items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      <div className="flex h-screen bg-[#050506] text-white items-center justify-center grain-texture">
+        <div className="flex flex-col items-center gap-6">
+          <Loader2 className="w-12 h-12 animate-spin text-emerald-500" />
+          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500/60 text-center">Materializing_Admin_Console...</span>
+        </div>
       </div>
     );
   }
 
-  // If not admin, don't render (will redirect)
-  if (!isAdmin) {
-    return null;
-  }
+  if (!isAdmin) return null;
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex h-screen bg-[#050506] text-white overflow-hidden grain-texture selection:bg-emerald-500/30 font-sans">
       {/* Sidebar */}
       <AdminSidebar />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0">
         <AdminTopbar />
-        <main className="flex-1 overflow-auto">
-          {children}
+        <main className="flex-1 overflow-auto bg-black/20 backdrop-blur-sm custom-scrollbar">
+          <div className="max-w-7xl mx-auto py-8 px-6 md:px-8 lg:px-12">
+            {children}
+          </div>
         </main>
       </div>
     </div>

@@ -17,7 +17,7 @@ const mockLayoutVersion = {
   id: 'lv-1',
   version: 3,
   screenName: 'home',
-  rexaJson: { type: 'scaffold', children: [] },
+  sduiJson: { type: 'scaffold', children: [] },
   publishedAt: new Date('2024-01-01'),
 };
 

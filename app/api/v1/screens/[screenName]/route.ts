@@ -90,7 +90,7 @@ export async function GET(
         id: true,
         version: true,
         screenName: true,
-        rexaJson: true,
+        sduiJson: true,
         publishedAt: true,
       },
     });
@@ -108,15 +108,15 @@ export async function GET(
           id: true,
           version: true,
           screenName: true,
-          rexaJson: true,
+          sduiJson: true,
           publishedAt: true,
         },
       });
 
-      if (publishedLayout && publishedLayout.rexaJson) {
-        // Use the layout's rexaJson as fallback (backward compatibility)
+      if (publishedLayout && publishedLayout.sduiJson) {
+        // Use the layout's sduiJson as fallback (backward compatibility)
         const responseTime = Date.now() - start;
-        const payload = publishedLayout.rexaJson as Record<string, unknown>;
+        const payload = publishedLayout.sduiJson as Record<string, unknown>;
 
         // ETag for fallback layout
         const etag = `"${createHash('sha256')
@@ -151,7 +151,7 @@ export async function GET(
               ETag: etag,
               'Cache-Control': 'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
               'X-Response-Time': `${responseTime}ms`,
-              'X-REXA-Version': String(publishedLayout.version),
+              'X-SDUI-Version': String(publishedLayout.version),
               'X-Fallback': 'true', // Indicate this is a fallback response
             },
           }
@@ -181,7 +181,7 @@ export async function GET(
     }
 
     const responseTime = Date.now() - start;
-    const payload = lv.rexaJson;
+    const payload = lv.sduiJson;
 
     // ETag = SHA-256 of the JSON payload, scoped to version id
     const etag = `"${createHash('sha256')
@@ -216,7 +216,7 @@ export async function GET(
           ETag: etag,
           'Cache-Control': 'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
           'X-Response-Time': `${responseTime}ms`,
-          'X-REXA-Version': String(lv.version),
+          'X-SDUI-Version': String(lv.version),
         },
       }
     );

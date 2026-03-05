@@ -1,5 +1,5 @@
 /**
- * Device presets for the REXA preview canvas.
+ * Device presets for the SDUI preview canvas.
  * Dimensions are logical pixels (CSS pixels), not physical pixels.
  * safeArea models Flutter's MediaQuery.padding for status/nav bars.
  */

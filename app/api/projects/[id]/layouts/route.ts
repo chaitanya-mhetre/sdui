@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db';
 import { successResponse, notFoundResponse, forbiddenResponse, errorResponse, validationErrorResponse, serverErrorResponse } from '@/lib/api-response';
 import { z } from 'zod';
 import type { AuthenticatedRequest } from '@/lib/api-middleware';
-import { validateRexaJson } from '@/lib/rexa/validation';
+import { validateSduiJson } from '@/lib/sdui/validation';
 
 const createLayoutSchema = z.object({
   name: z.string().min(1, 'Layout name is required').max(100),
@@ -14,7 +14,7 @@ const createLayoutSchema = z.object({
     .regex(/^[a-z0-9_-]*$/, 'Screen name must be lowercase alphanumeric with _ or -')
     .optional(),
   rootNode: z.record(z.unknown(), z.unknown()), // LayoutNode as JSON
-  rexaJson: z.record(z.unknown(), z.unknown()).optional(), // REXA Flutter JSON
+  sduiJson: z.record(z.unknown(), z.unknown()).optional(), // SDUI Flutter JSON
 });
 
 async function getLayouts(request: AuthenticatedRequest) {
@@ -128,9 +128,9 @@ async function createLayout(request: AuthenticatedRequest) {
       }
     }
 
-    // Note: rootNode is in builder format (componentType), not REXA format (type)
-    // Validation happens when publishing (converting to REXA format)
-    // So we skip REXA validation here for rootNode
+    // Note: rootNode is in builder format (componentType), not SDUI format (type)
+    // Validation happens when publishing (converting to SDUI format)
+    // So we skip SDUI validation here for rootNode
 
     // Check layout limit
     const layoutCount = await prisma.layout.count({
@@ -177,7 +177,7 @@ async function createLayout(request: AuthenticatedRequest) {
         name: validationResult.data.name,
         screenName: validationResult.data.screenName ?? null,
         rootNode: validationResult.data.rootNode,
-        rexaJson: validationResult.data.rexaJson ?? null,
+        sduiJson: validationResult.data.sduiJson ?? null,
         version: 1,
       },
     });

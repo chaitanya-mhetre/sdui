@@ -14,7 +14,7 @@ interface DeviceFrameProps {
 
 /**
  * Renders a minimal device chrome (rounded rect + status/nav bar areas)
- * and applies the correct safe-area insets so REXA widgets render exactly
+ * and applies the correct safe-area insets so SDUI widgets render exactly
  * as they would inside a Flutter Scaffold.
  */
 export function DeviceFrame({

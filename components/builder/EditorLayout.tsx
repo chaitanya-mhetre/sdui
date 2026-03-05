@@ -19,7 +19,7 @@ interface DbLayout {
   // optional full fields — present when coming from EditorPage
   projectId?: string;
   rootNode?: Record<string, unknown>;
-  rexaJson?: Record<string, unknown> | null;
+  sduiJson?: Record<string, unknown> | null;
   publishedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;

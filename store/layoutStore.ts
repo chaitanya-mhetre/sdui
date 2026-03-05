@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 /**
- * REXA layout store – holds the raw JSON for the code editor
+ * SDUI layout store – holds the raw JSON for the code editor
  * and drives the live preview when in Flutter-style schema.
  */
 interface LayoutState {

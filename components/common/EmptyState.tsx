@@ -28,7 +28,11 @@ export function EmptyState({
       animate="visible"
     >
       <motion.div
-        className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 text-primary"
+        className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6"
+        style={{
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          color: 'rgb(59, 130, 246)'
+        }}
         whileHover={{ scale: 1.05 }}
         transition={{ type: 'spring', stiffness: 300 }}
       >

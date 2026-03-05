@@ -193,7 +193,7 @@ export function PropertiesPanel() {
     return <div className="p-4 text-xs text-muted-foreground">Component not found.</div>;
   }
 
-  // Resolve component definition — try both componentType and REXA-style "type"
+  // Resolve component definition — try both componentType and SDUI-style "type"
   const typeKey = selectedNode.componentType ?? (selectedNode as any).type ?? '';
   const componentDef =
     getComponentDefinition(typeKey) ??
@@ -201,20 +201,20 @@ export function PropertiesPanel() {
     null;
 
   // Helper: read a property value from the node (works for both LayoutNode.props
-  // and flat REXA-style nodes where props live at root level)
+  // and flat SDUI-style nodes where props live at root level)
   const getPropValue = (name: string): unknown => {
     if (selectedNode.props && name in selectedNode.props) return selectedNode.props[name];
     return (selectedNode as any)[name];
   };
 
-  // Handle property change — write to props (LayoutNode) AND root level (REXA compat)
+  // Handle property change — write to props (LayoutNode) AND root level (SDUI compat)
   const handleChange = (name: string, value: unknown) => {
     updateNode(selectedNodeId, {
       props: {
         ...selectedNode.props,
         [name]: value,
       },
-      // Also patch root-level for REXA format compatibility
+      // Also patch root-level for SDUI format compatibility
       [name]: value,
     } as any);
   };

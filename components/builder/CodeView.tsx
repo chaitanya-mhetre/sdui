@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { useBuilderStore } from '@/store/builderStore';
 import { PreviewCanvas } from './PreviewCanvas';
 import { layoutToCode, codeToLayout } from '@/lib/layoutCode';
-import { parseLayout } from '@/lib/rexa/layoutParser';
+import { parseLayout } from '@/lib/sdui/layoutParser';
 import { apiRequest } from '@/lib/api-client';
 import { FileJson, Plus, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
 
@@ -32,7 +32,7 @@ interface DbLayout {
   version: number;
   projectId?: string;
   rootNode?: Record<string, unknown>;
-  rexaJson?: Record<string, unknown> | null;
+  sduiJson?: Record<string, unknown> | null;
   publishedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -64,31 +64,31 @@ export function CodeView({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevLayoutIdRef = useRef<string | null | undefined>(activeLayoutId);
 
-  // Helper to detect if JSON is REXA format (has body/appBar) vs builder format (has children)
-  const isRexaFormat = (jsonStr: string): boolean => {
+  // Helper to detect if JSON is SDUI format (has body/appBar) vs builder format (has children)
+  const isSduiFormat = (jsonStr: string): boolean => {
     try {
       const parsed = JSON.parse(jsonStr);
       if (typeof parsed !== 'object' || Array.isArray(parsed)) return false;
-      // REXA format has body, appBar, or other scaffold slots
+      // SDUI format has body, appBar, or other scaffold slots
       return 'body' in parsed || 'appBar' in parsed || 'floatingActionButton' in parsed || 'bottomNavigation' in parsed;
     } catch {
       return false;
     }
   };
 
-  // When Code tab opens (code empty) or user switches screen: sync code from rootNode or rexaJson
+  // When Code tab opens (code empty) or user switches screen: sync code from rootNode or sduiJson
   useEffect(() => {
     if (prevLayoutIdRef.current !== activeLayoutId || code === '') {
       prevLayoutIdRef.current = activeLayoutId;
-      // Check if we have rexaJson in the layout
+      // Check if we have sduiJson in the layout
       const currentLayoutData = allLayouts.find((l) => l.id === activeLayoutId) || 
-        (currentLayout && { rexaJson: currentLayout.rexaJson });
+        (currentLayout && { sduiJson: currentLayout.sduiJson });
       
-      if (currentLayoutData?.rexaJson) {
-        // Use REXA JSON if available
-        const rexaCode = JSON.stringify(currentLayoutData.rexaJson, null, 2);
-        setCode(rexaCode);
-        setLayoutJson(rexaCode);
+      if (currentLayoutData?.sduiJson) {
+        // Use SDUI JSON if available
+        const sduiCode = JSON.stringify(currentLayoutData.sduiJson, null, 2);
+        setCode(sduiCode);
+        setLayoutJson(sduiCode);
         setParseError(null);
       } else if (rootNode) {
         // Fall back to builder format
@@ -119,29 +119,29 @@ export function CodeView({
         return;
       }
 
-      // Check if it's REXA format
-      if (isRexaFormat(v)) {
-        // Validate REXA format
+      // Check if it's SDUI format
+      if (isSduiFormat(v)) {
+        // Validate SDUI format
         const result = parseLayout(v);
         if (result.success) {
           setLayoutJson(v);
           setParseError(null);
-          // Auto-save rexaJson to layout and update store
+          // Auto-save sduiJson to layout and update store
           if (currentLayout?.id) {
-            const rexaJson = JSON.parse(v);
+            const sduiJson = JSON.parse(v);
             apiRequest(`/layouts/${currentLayout.id}`, {
               method: 'PATCH',
-              body: JSON.stringify({ rexaJson }),
+              body: JSON.stringify({ sduiJson }),
             })
               .then(() => {
-                // Update store with new rexaJson
+                // Update store with new sduiJson
                 if (currentLayout) {
-                  const updatedLayout = { ...currentLayout, rexaJson };
+                  const updatedLayout = { ...currentLayout, sduiJson };
                   useBuilderStore.getState().setCurrentLayout(updatedLayout);
                 }
               })
               .catch((err) => {
-                console.error('Failed to auto-save rexaJson:', err);
+                console.error('Failed to auto-save sduiJson:', err);
               });
           }
         } else {
@@ -302,7 +302,7 @@ export function CodeView({
                 Invalid JSON
               </span>
             )}
-            <span className="text-xs text-muted-foreground">REXA · Flutter-compatible</span>
+            <span className="text-xs text-muted-foreground">SDUI · Flutter-compatible</span>
           </div>
         </div>
 

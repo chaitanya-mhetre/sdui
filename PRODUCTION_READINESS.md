@@ -18,7 +18,7 @@ Prioritized list of the most important remaining work to make this app productio
 
 ### 3. **API request safety**
 - **Payload limits:** Many routes use `request.json()` with no explicit size limit. Consider enforcing a body size limit (e.g. in middleware or per-route) to avoid DoS via huge payloads.
-- **rootNode validation:** Layout PATCH accepts `rootNode` as `z.record(z.unknown(), z.unknown())` with no depth/node limit. Reuse or mirror REXA validation (e.g. max depth, max nodes) for `rootNode` to prevent abuse and keep storage/rendering safe.
+- **rootNode validation:** Layout PATCH accepts `rootNode` as `z.record(z.unknown(), z.unknown())` with no depth/node limit. Reuse or mirror SDUI validation (e.g. max depth, max nodes) for `rootNode` to prevent abuse and keep storage/rendering safe.
 
 ### 4. **Logging & observability**
 - **Console usage:** There are many `console.log`/`console.error` calls in `app/` and `app/api/`. In production, use a proper logger (or strip/guard logs by env) so you don’t leak sensitive data and can control log level and format.
@@ -37,7 +37,7 @@ Prioritized list of the most important remaining work to make this app productio
 - **Session handling:** Confirm redirects after login/signup and token refresh behave correctly in production (same-site, HTTPS, cookie settings).
 
 ### 7. **Data & validation**
-- **Layout save payload:** You already validate `rexaJson` with `validateRexaJson` when provided. Extend or duplicate similar limits (depth, node count, key size) for `rootNode` on PATCH so both formats are safe.
+- **Layout save payload:** You already validate `sduiJson` with `validateSduiJson` when provided. Extend or duplicate similar limits (depth, node count, key size) for `rootNode` on PATCH so both formats are safe.
 - **Input sanitization:** Zod is used for shape validation; ensure any user-facing strings (e.g. layout names, screen names) are sanitized or length-limited where they’re stored or reflected (XSS, DB bloat).
 
 ### 8. **User experience**

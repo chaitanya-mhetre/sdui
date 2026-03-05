@@ -5,7 +5,7 @@ CREATE TABLE "layout_versions" (
     "projectId"   TEXT NOT NULL,
     "screenName"  TEXT,
     "version"     INTEGER NOT NULL,
-    "rexaJson"    JSONB NOT NULL,
+    "sduiJson"    JSONB NOT NULL,
     "publishedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "publishedBy" TEXT,
     "isActive"    BOOLEAN NOT NULL DEFAULT false,

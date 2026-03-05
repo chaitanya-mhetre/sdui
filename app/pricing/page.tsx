@@ -1,143 +1,160 @@
 'use client';
 
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Check, ArrowLeft } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Check, ArrowLeft, Zap, Shield, Globe, Star } from 'lucide-react';
+import Badge from '@/components/marketing/Badge';
+import SiteLayout from '@/components/marketing/SiteLayout';
 
 export default function PricingPage() {
   const plans = [
     {
-      name: 'Free',
+      name: 'Standard',
       price: '$0',
-      description: 'Get started with BuildUI',
-      features: ['5 projects', '10 screens per project', 'Basic components', 'Community support'],
-      cta: 'Get Started',
+      description: 'Initialize your first node clusters',
+      features: ['5 Projects', 'Basic UI Materialization', 'Community Registry Access', 'Standard Node Latency'],
+      cta: 'Initialize_Free',
       popular: false,
     },
     {
-      name: 'Pro',
+      name: 'Industrial',
       price: '$29',
       period: '/month',
-      description: 'For growing teams',
+      description: 'For high-scale distribution',
       features: [
-        'Unlimited projects',
-        'Unlimited screens',
-        'All components',
-        'API access',
-        'Priority support',
-        'Custom components',
+        'Unlimited Global Projects',
+        'Direct-to-Metal Rendering',
+        'Atomic Priority Sync',
+        'Global Edge Proxy Access',
+        'Schema Logic Engine v4',
+        'Industrial Support Node',
       ],
-      cta: 'Start Free Trial',
+      cta: 'Start_Deployment',
       popular: true,
     },
     {
       name: 'Enterprise',
       price: 'Custom',
-      description: 'For large organizations',
+      description: 'For global infrastructure',
       features: [
-        'Everything in Pro',
-        'Dedicated support',
-        'SLA guarantee',
-        'SSO & SAML',
-        'Custom integrations',
-        'On-premise option',
+        'Everything in Industrial',
+        'Dedicated Node Clusters',
+        'Military-Grade Encryption',
+        'On-Premise Deployment',
+        'Custom Proxy Sharding',
+        'Direct Core Access',
       ],
-      cta: 'Contact Sales',
+      cta: 'Request_Access',
       popular: false,
     },
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <header className="border-b border-border sticky top-0 bg-background/80 backdrop-blur-md z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center">
-          <Link href="/" className="flex items-center gap-2 text-foreground hover:text-primary transition">
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back</span>
-          </Link>
-        </div>
-      </header>
+    <SiteLayout>
+      <div className="pt-32 pb-24 px-6 md:px-8 lg:px-12">
+        <div className="max-w-7xl mx-auto">
+          {/* Heading */}
+          <div className="text-center mb-20 md:mb-32">
+            <Badge className="mb-8">Resource Allocation</Badge>
+            <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tight text-white mb-8">
+              Scalable <span className="text-emerald-500 italic">Protocols</span>
+            </h1>
+            <p className="text-zinc-400 text-lg md:text-xl font-medium max-w-3xl mx-auto leading-relaxed">
+              Select the distribution tier required for your global materialization needs. Zero overhead, infinite scale.
+            </p>
+          </div>
 
-      <main className="max-w-7xl mx-auto px-6 py-20">
-        {/* Heading */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold mb-4">Simple, Transparent Pricing</h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Choose the perfect plan for your team. Always flexible to scale.
-          </p>
-        </div>
-
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-8">
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`rounded-lg border p-8 flex flex-col ${
-                plan.popular
-                  ? 'bg-primary/5 border-primary ring-2 ring-primary'
-                  : 'bg-card border-border hover:border-primary/30'
-              }`}
-            >
-              {plan.popular && (
-                <div className="mb-4">
-                  <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-                    Most Popular
-                  </span>
-                </div>
-              )}
-
-              <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-              <p className="text-muted-foreground text-sm mb-6">{plan.description}</p>
-
-              <div className="mb-6">
-                <span className="text-4xl font-bold">{plan.price}</span>
-                {plan.period && <span className="text-muted-foreground">{plan.period}</span>}
-              </div>
-
-              <Button
-                className={`w-full rounded-lg mb-8 ${
-                  plan.popular ? 'bg-primary' : 'bg-secondary text-secondary-foreground'
-                }`}
+          {/* Pricing Cards */}
+          <div className="grid md:grid-cols-3 gap-8 mb-32">
+            {plans.map((plan, idx) => (
+              <motion.div
+                key={plan.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                className={`p-8 md:p-10 rounded-[2.5rem] border flex flex-col relative overflow-hidden group transition-all duration-500 ${plan.popular
+                    ? 'bg-emerald-500 text-black border-transparent shadow-[0_40px_80px_rgba(16,185,129,0.2)] scale-105 z-10'
+                    : 'bg-white/[0.03] border-white/[0.08] text-white hover:border-emerald-500/30'
+                  }`}
               >
-                {plan.cta}
-              </Button>
+                {plan.popular && (
+                  <div className="absolute top-0 right-0 p-8">
+                    <Star className="w-8 h-8 opacity-20" fill="currentColor" />
+                  </div>
+                )}
 
-              <div className="space-y-4 flex-1">
-                {plan.features.map((feature) => (
-                  <div key={feature} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">{feature}</span>
+                <div className="relative z-10">
+                  <h3 className="text-2xl font-black uppercase tracking-tight mb-2 italic">{plan.name}</h3>
+                  <p className={`text-sm font-semibold mb-8 ${plan.popular ? 'text-black/60' : 'text-zinc-500'}`}>{plan.description}</p>
+
+                  <div className="mb-10">
+                    <span className="text-5xl font-black italic tracking-tighter">{plan.price}</span>
+                    {plan.period && <span className={`text-sm font-black uppercase tracking-widest ${plan.popular ? 'text-black/60' : 'text-zinc-500'}`}>{plan.period}</span>}
+                  </div>
+
+                  <button
+                    className={`w-full py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] mb-10 transition-all active:scale-95 shadow-2xl ${plan.popular ? 'bg-black text-white hover:bg-zinc-900' : 'bg-white text-black hover:bg-emerald-400'
+                      }`}
+                  >
+                    {plan.cta}
+                  </button>
+
+                  <div className="space-y-5">
+                    {plan.features.map((feature) => (
+                      <div key={feature} className="flex items-start gap-4">
+                        <Check className={`w-5 h-5 flex-shrink-0 mt-0.5 ${plan.popular ? 'text-black' : 'text-emerald-500'}`} />
+                        <span className={`text-sm font-bold ${plan.popular ? 'text-black/80' : 'text-zinc-400'}`}>{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Infrastructure Metrics */}
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="p-8 md:p-12 rounded-[2.5rem] bg-white/[0.02] border border-white/[0.08] backdrop-blur-3xl">
+              <h3 className="text-xl font-black uppercase tracking-tight text-white mb-8 flex items-center gap-4">
+                <Globe className="w-5 h-5 text-emerald-500" />
+                Regional Distribution
+              </h3>
+              <div className="space-y-6">
+                {['US_CENTRAL_01', 'EU_WEST_02', 'AP_SOUTH_01'].map(id => (
+                  <div key={id} className="flex items-center justify-between p-4 rounded-xl bg-black/40 border border-white/5">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{id}</span>
+                    <span className="text-[10px] font-black text-emerald-500 uppercase italic">ACTIVE_NODE</span>
                   </div>
                 ))}
               </div>
             </div>
-          ))}
-        </div>
-
-        {/* FAQ */}
-        <div className="mt-20">
-          <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="font-semibold mb-2">Can I change plans anytime?</h3>
-              <p className="text-muted-foreground">Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately.</p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">Do you offer discounts for annual billing?</h3>
-              <p className="text-muted-foreground">Yes! Annual billing plans include a 20% discount compared to monthly billing.</p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">Is there a free trial?</h3>
-              <p className="text-muted-foreground">Yes, Pro plan comes with a 14-day free trial. No credit card required.</p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">What payment methods do you accept?</h3>
-              <p className="text-muted-foreground">We accept all major credit cards, and invoicing for annual Enterprise plans.</p>
+            <div className="p-8 md:p-12 rounded-[2.5rem] bg-white/[0.02] border border-white/[0.08] backdrop-blur-3xl">
+              <h3 className="text-xl font-black uppercase tracking-tight text-white mb-8 flex items-center gap-4">
+                <Zap className="w-5 h-5 text-emerald-500" />
+                Performance Metrics
+              </h3>
+              <div className="space-y-8">
+                {[
+                  { label: "Materialization Time", value: "0.2ms" },
+                  { label: "Consistency Factor", value: "100%" },
+                  { label: "Registry Latency", value: "8ms" }
+                ].map(stat => (
+                  <div key={stat.label} className="space-y-2">
+                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                      <span>{stat.label}</span>
+                      <span className="text-emerald-500">{stat.value}</span>
+                    </div>
+                    <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 w-full opacity-30 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </SiteLayout>
   );
 }

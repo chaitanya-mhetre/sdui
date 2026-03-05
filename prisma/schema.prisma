@@ -135,7 +135,7 @@ model Layout {
   name        String
   screenName  String?   // URL-friendly screen slug e.g. "home", "cart", "restaurant"
   rootNode    Json      // LayoutNode as JSON (design mode tree)
-  rexaJson    Json?     // REXA Flutter-compatible JSON (code mode)
+  sduiJson    Json?     // SDUI Flutter-compatible JSON (code mode)
   version     Int       @default(1)
   isPublished Boolean   @default(false)
   publishedAt DateTime?
@@ -160,7 +160,7 @@ model LayoutVersion {
   projectId   String
   screenName  String?
   version     Int
-  rexaJson    Json      // Immutable REXA JSON snapshot
+  sduiJson    Json      // Immutable SDUI JSON snapshot
   publishedAt DateTime  @default(now())
   publishedBy String?   // userId of who published
   isActive    Boolean   @default(false) // current live version for this screen
