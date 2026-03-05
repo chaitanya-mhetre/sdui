@@ -11,20 +11,34 @@ const isPublicRoute = createRouteMatcher([
   '/api/auth/webhook(.*)', // Clerk webhook
   '/api/auth/register(.*)', // Public registration
   '/api/auth/login(.*)', // Public login
+  '/api/v1/screens(.*)', // Public Flutter SDK endpoint
 ]);
 
 // API routes that handle their own authentication
 const isApiRoute = createRouteMatcher(['/api(.*)']);
 
 export default clerkMiddleware(async (auth, request) => {
-  // Don't protect API routes - they handle their own authentication
-  if (isApiRoute(request)) {
-    return;
-  }
+  try {
+    // Don't protect API routes - they handle their own authentication
+    if (isApiRoute(request)) {
+      return;
+    }
 
-  // Protect all other routes except public ones
-  if (!isPublicRoute(request)) {
-    await auth.protect();
+    // Protect all other routes except public ones
+    if (!isPublicRoute(request)) {
+      await auth.protect();
+    }
+  } catch (error) {
+    // Log error but don't fail the request for public routes
+    console.error('Middleware error:', error);
+    
+    // If it's a public route, allow it through
+    if (isPublicRoute(request) || isApiRoute(request)) {
+      return;
+    }
+    
+    // For protected routes, re-throw the error
+    throw error;
   }
 });
 
