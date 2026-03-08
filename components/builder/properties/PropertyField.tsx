@@ -346,18 +346,21 @@ export function PropertyField({ property, value, onChange }: PropertyFieldProps)
         <div>
           <Label className="text-xs text-muted-foreground">{property.label}</Label>
           <Select
-            value={String(value ?? property.default ?? '')}
-            onValueChange={(v) => onChange(v)}
+            value={String(value ?? property.default ?? '') || '_empty_'}
+            onValueChange={(v) => onChange(v === '_empty_' ? '' : v)}
           >
             <SelectTrigger className="mt-1.5 h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {property.options?.map((opt) => (
-                <SelectItem key={String(opt.value)} value={String(opt.value)} className="text-xs">
-                  {opt.label}
-                </SelectItem>
-              ))}
+              {property.options?.map((opt) => {
+                const optVal = String(opt.value) || '_empty_';
+                return (
+                  <SelectItem key={optVal} value={optVal} className="text-xs">
+                    {opt.label}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>

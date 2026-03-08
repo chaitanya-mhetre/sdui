@@ -240,7 +240,7 @@ function LayoutContainer({
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
-      className={`flex ${flexDirection} ${paddingClass} ${gapClass} ${radiusClass} ${isSelected ? 'ring-2 ring-primary' : ''}`}
+      className={`flex ${flexDirection} ${paddingClass} ${gapClass} ${radiusClass} ${isSelected ? 'ring-2 ring-primary' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
       style={{
         backgroundColor,
         width,
@@ -269,13 +269,37 @@ function TextComponent({
   onNodeClick,
   selectedNodeId,
 }: RendererProps & { componentDef: any }) {
-  const text = (node.props.text as string) || 'Text';
-  const fontSize = (node.props.fontSize as number) || 16;
-  const fontWeight = (node.props.fontWeight as string) || 'normal';
-  const color = (node.props.color as string) || '#000000';
-  const textAlign = (node.props.textAlign as string) || 'left';
+  const getProp = (key: string, defaultVal: any) => {
+    if (node.props && node.props[key] !== undefined) return node.props[key];
+    if ((node as any)[key] !== undefined) return (node as any)[key];
+    return defaultVal;
+  };
+
+  const text = getProp('data', getProp('text', 'Text'));
+  const fontSize = getProp('fontSize', 14);
+  const fontWeight = getProp('fontWeight', 'normal');
+  const fontStyle = getProp('fontStyle', 'normal');
+  const fontFamily = getProp('fontFamily', '');
+  const color = getProp('color', '#000000');
+  const textAlign = getProp('textAlign', 'left');
+  const letterSpacing = getProp('letterSpacing', 0);
+  const wordSpacing = getProp('wordSpacing', 0);
+  const lineHeight = getProp('lineHeight', 1.5);
+  const maxLines = getProp('maxLines', 0);
+  const overflow = getProp('overflow', 'clip');
 
   const isSelected = selectedNodeId === node.id;
+
+  const overflowStyles: React.CSSProperties =
+    maxLines > 0
+      ? {
+          display: '-webkit-box',
+          WebkitLineClamp: maxLines,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          textOverflow: overflow === 'ellipsis' ? 'ellipsis' : 'clip',
+        }
+      : {};
 
   return (
     <div
@@ -283,12 +307,18 @@ function TextComponent({
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
-      className={`${isSelected ? 'ring-2 ring-primary' : ''}`}
+      className={`${isSelected ? 'ring-2 ring-primary ring-offset-1' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
       style={{
         fontSize: `${fontSize}px`,
         fontWeight: fontWeight === '600' ? 600 : fontWeight === 'bold' ? 'bold' : 'normal',
+        fontStyle,
+        fontFamily: fontFamily || 'inherit',
         color,
         textAlign: textAlign as any,
+        letterSpacing: `${letterSpacing}px`,
+        wordSpacing: `${wordSpacing}px`,
+        lineHeight,
+        ...overflowStyles,
       }}
     >
       {text}
@@ -376,25 +406,42 @@ function ButtonComponent({
   onNodeClick,
   selectedNodeId,
 }: RendererProps & { componentDef: any }) {
-  const label = (node.props.label as string) || 'Click me';
-  const variant = (node.props.variant as string) || 'primary';
-  const size = (node.props.size as string) || 'md';
-  const disabled = (node.props.disabled as boolean) || false;
+  const getProp = (key: string, defaultVal: any) => {
+    if (node.props && node.props[key] !== undefined) return node.props[key];
+    if ((node as any)[key] !== undefined) return (node as any)[key];
+    return defaultVal;
+  };
+
+  const label = getProp('label', 'Button');
+  const backgroundColor = getProp('backgroundColor', '#6366F1');
+  const color = getProp('color', '#FFFFFF');
+  const fontSize = Number(getProp('fontSize', 14));
+  const fwRaw = getProp('fontWeight', '600');
+  const fontWeight = fwRaw === 'bold' ? 'bold' : fwRaw === 'normal' ? 'normal' : Number(fwRaw) || 600;
+  const borderRadius = Number(getProp('borderRadius', 8));
+  const elevation = Number(getProp('elevation', 2));
+  const paddingHorizontal = Number(getProp('paddingHorizontal', 16));
+  const paddingVertical = Number(getProp('paddingVertical', 12));
+  
+  // Try to parse fullWidth as boolean safely
+  const rawFW = getProp('fullWidth', false);
+  const fullWidth = rawFW === true || rawFW === 'true';
+  const disabled = getProp('disabled', false) === true || getProp('disabled', false) === 'true';
 
   const isSelected = selectedNodeId === node.id;
 
-  const variantClasses = {
-    primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
-    secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-    outline: 'border-2 border-border text-foreground hover:bg-muted',
-    ghost: 'text-foreground hover:bg-muted',
-  };
-
-  const sizeClasses = {
-    sm: 'px-3 py-1 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
-  };
+  // Approximate Material Elevation shadows mapping
+  const elevationShadows = [
+    'none',
+    '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+    '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+    '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+    '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+    '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+    '0 25px 50px -12px rgb(0 0 0 / 0.25)'
+  ];
+  const shadowIndex = Math.min(Math.floor(elevation / 4), 6);
+  const boxShadow = elevationShadows[Math.max(0, shadowIndex)] ?? 'none';
 
   return (
     <button
@@ -403,7 +450,25 @@ function ButtonComponent({
         onNodeClick?.(node.id);
       }}
       disabled={disabled || !isInteractive}
-      className={`rounded-md font-medium transition-colors ${variantClasses[variant as keyof typeof variantClasses] || variantClasses.primary} ${sizeClasses[size as keyof typeof sizeClasses] || sizeClasses.md} ${isSelected ? 'ring-2 ring-primary' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      className={`transition-all ${isSelected ? 'ring-2 ring-primary ring-offset-2' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}
+      style={{
+        backgroundColor,
+        color,
+        fontSize: `${fontSize}px`,
+        fontWeight,
+        borderRadius: `${borderRadius}px`,
+        paddingTop: `${paddingVertical}px`,
+        paddingBottom: `${paddingVertical}px`,
+        paddingLeft: `${paddingHorizontal}px`,
+        paddingRight: `${paddingHorizontal}px`,
+        width: fullWidth ? '100%' : 'auto',
+        boxShadow,
+        display: fullWidth ? 'flex' : 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: 'none',
+        outline: 'none',
+      }}
     >
       {label}
     </button>

@@ -265,18 +265,18 @@ export function Toolbar({ project }: ToolbarProps) {
       <div className="flex items-center gap-4">
         <div className="flex rounded-lg border border-border bg-muted/30 p-0.5">
           <Button
-            variant={editorViewMode === 'design' ? 'secondary' : 'ghost'}
+            variant="ghost"
             size="sm"
-            className="rounded-md gap-2 h-8"
+            className={`rounded-md gap-2 h-8 ${editorViewMode === 'design' ? 'bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
             onClick={() => setEditorViewMode('design')}
           >
             <LayoutPanelTop className="w-4 h-4" />
             Design
           </Button>
           <Button
-            variant={editorViewMode === 'code' ? 'secondary' : 'ghost'}
+            variant="ghost"
             size="sm"
-            className="rounded-md gap-2 h-8"
+            className={`rounded-md gap-2 h-8 ${editorViewMode === 'code' ? 'bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
             onClick={() => setEditorViewMode('code')}
           >
             <Code2 className="w-4 h-4" />

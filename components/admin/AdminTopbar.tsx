@@ -6,6 +6,7 @@ import { useClerk } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import { Bell, LogOut, Search, Menu, Command, Database, Activity, Globe, ShieldAlert } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { ThemeToggle } from '@/components/dashboard/ThemeToggle';
 import { motion } from 'framer-motion';
 import { useAdminStore } from '@/store/adminStore';
 import { useToast } from '@/hooks/use-toast';
@@ -53,10 +54,12 @@ export function AdminTopbar() {
 
   return (
     <motion.header
-      className="h-16 border-b border-white/[0.08] bg-[#09090b]/80 backdrop-blur-3xl px-8 flex items-center justify-between relative z-20"
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.3 }}
+      {...({
+        className: "h-16 border-b border-border bg-background/80 backdrop-blur-xl px-8 flex items-center justify-between relative z-20",
+        initial: { y: -20, opacity: 0 },
+        animate: { y: 0, opacity: 1 },
+        transition: { duration: 0.3 }
+      } as any)}
     >
       {/* Left Section: Search & Toggle */}
       <div className="flex items-center gap-6 flex-1">
@@ -64,56 +67,57 @@ export function AdminTopbar() {
           variant="ghost"
           size="icon"
           onClick={() => actualSetSidebarOpen(!useAdminStore.getState().sidebarOpen)}
-          className="lg:hidden hover:bg-white/5"
+          className="lg:hidden hover:bg-muted/50"
         >
           <Menu className="w-5 h-5" />
         </Button>
 
-        <div className="hidden md:flex items-center gap-4 bg-black border border-white/[0.08] rounded-xl px-4 py-2 flex-1 max-w-lg group">
-          <Search className="w-3.5 h-3.5 text-zinc-600 group-hover:text-emerald-500 transition-colors" />
+        <div className="hidden md:flex items-center gap-4 bg-muted/20 border border-border rounded-xl px-4 py-2 flex-1 max-w-lg group">
+          <Search className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
           <Input
-            placeholder="PLATFORM_QUERY..."
-            className="border-0 bg-transparent text-[10px] font-black uppercase tracking-widest placeholder:text-zinc-700 focus-visible:ring-0 p-0 h-auto"
+            placeholder="PLATFORM QUERY..."
+            className="border-0 bg-transparent text-[10px] font-bold uppercase tracking-widest placeholder:text-muted-foreground focus-visible:ring-0 p-0 h-auto"
           />
-          <div className="flex items-center gap-1.5 opacity-30">
+          <div className="flex items-center gap-1.5 opacity-40">
             <Command className="w-3 h-3" />
-            <span className="text-[8px] font-black italic">F</span>
+            <span className="text-[10px] font-bold">F</span>
           </div>
         </div>
       </div>
 
       {/* Right Section: System Metrics & Profile */}
       <div className="flex items-center gap-8">
-        <div className="hidden lg:flex items-center gap-8 pr-8 border-r border-white/[0.08]">
+        <div className="hidden lg:flex items-center gap-8 pr-8 border-r border-border">
           <div className="flex flex-col items-end">
-            <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500">System_Health</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">System Health</span>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black text-emerald-400 uppercase">Operational</span>
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
+              <span className="text-[11px] font-bold text-primary uppercase">Operational</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             </div>
           </div>
           <div className="flex flex-col items-end">
-            <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500">DB_Clusters</span>
-            <span className="text-[10px] font-black text-white uppercase flex items-center gap-2 italic">
-              <Database className="w-3 h-3 text-emerald-500/60" />
-              100%_SYNC
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">DB Clusters</span>
+            <span className="text-[11px] font-bold text-foreground uppercase flex items-center gap-2">
+              <Database className="w-3 h-3 text-primary/60" />
+              100% SYNC
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="rounded-xl hover:bg-emerald-500/5 hover:text-emerald-400 transition-all">
+          <ThemeToggle />
+          <Button variant="ghost" size="icon" className="rounded-xl hover:bg-primary/5 hover:text-primary transition-all">
             <Bell className="w-4 h-4" />
           </Button>
 
-          <div className="h-8 w-px bg-white/[0.08]" />
+          <div className="h-8 w-px bg-border mx-2" />
 
           <div className="flex items-center gap-4 group cursor-default">
             <div className="text-right hidden sm:block">
-              <p className="text-[10px] font-black uppercase tracking-tight text-white">{currentAdmin?.name || 'Administrator'}</p>
-              <p className="text-[8px] font-black uppercase tracking-widest text-emerald-500/60 transition-colors">Super_Admin_v4</p>
+              <p className="text-sm font-semibold text-foreground tracking-tight">{currentAdmin?.name || 'Administrator'}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-primary/80 transition-colors">Super Admin</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.1)] group-hover:scale-110 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
               <ShieldAlert className="w-5 h-5" />
             </div>
           </div>
@@ -121,7 +125,7 @@ export function AdminTopbar() {
           <Button
             variant="ghost"
             size="icon"
-            className="rounded-xl hover:bg-red-500/10 hover:text-red-400 transition-all"
+            className="rounded-xl hover:bg-destructive/10 hover:text-destructive transition-all"
             onClick={() => setShowLogoutDialog(true)}
           >
             <LogOut className="w-4 h-4" />
@@ -130,20 +134,20 @@ export function AdminTopbar() {
       </div>
 
       <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <AlertDialogContent className="bg-[#0b0b0d] border border-white/10 rounded-2xl shadow-[0_40px_80px_rgba(0,0,0,0.8)]">
+        <AlertDialogContent className="bg-background border border-border rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl font-black uppercase text-white tracking-tight italic">Shutdown_Admin_Session?</AlertDialogTitle>
-            <AlertDialogDescription className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">
+            <AlertDialogTitle className="text-xl font-bold text-foreground tracking-tight">Shutdown Admin Session?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-semibold text-sm">
               Emergency logout sequence will be initiated.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-8">
-            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl font-black uppercase tracking-widest text-[9px] px-6">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl font-semibold">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleLogout}
-              className="bg-red-500 text-white hover:bg-red-600 rounded-xl font-black uppercase tracking-widest text-[9px] px-6 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl font-semibold"
             >
-              Confirm_Logout
+              Confirm Logout
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

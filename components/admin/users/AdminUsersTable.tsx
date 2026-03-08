@@ -33,10 +33,12 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
 
   return (
     <motion.div
-      className="border border-border rounded-lg overflow-hidden bg-card/50 backdrop-blur-sm"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
+      {...({
+        className: "border border-border rounded-xl overflow-hidden bg-card/50 backdrop-blur-xl shadow-sm",
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        transition: { duration: 0.3 }
+      } as any)}
     >
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -53,12 +55,9 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
           </thead>
           <tbody>
             {users.map((user, idx) => (
-              <motion.tr
+              <tr
                 key={user.id}
                 className="border-b border-border hover:bg-muted/30 transition-colors"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
               >
                 <td className="px-6 py-4">
                   <div>
@@ -103,7 +102,7 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
                     </Button>
                   </div>
                 </td>
-              </motion.tr>
+              </tr>
             ))}
           </tbody>
         </table>

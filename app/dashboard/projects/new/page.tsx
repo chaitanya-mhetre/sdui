@@ -72,28 +72,31 @@ export default function NewProjectPage() {
   }
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="max-w-3xl mx-auto">
       <Link
         href="/dashboard/projects"
-        className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition mb-8"
+        className="group flex items-center gap-2 text-muted-foreground hover:text-foreground transition-all mb-10 w-fit"
       >
-        <ArrowLeft className="w-4 h-4" />
-        <span>Back to Projects</span>
+        <div className="p-2 rounded-lg bg-muted group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+        </div>
+        <span className="text-sm font-semibold">Back to Projects</span>
       </Link>
-
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Create New Project</h1>
-        <p className="text-muted-foreground">Start building your UI with a new project</p>
+      
+      <div className="mb-10">
+        <h1 className="text-4xl font-bold tracking-tight mb-3">Create New Project</h1>
+        <p className="text-muted-foreground text-lg font-medium">Start building your UI with a new project</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="premium-card p-10 rounded-2xl">
+        <form onSubmit={handleSubmit} className="space-y-8">
         <div>
-          <Label htmlFor="name">Project Name *</Label>
+          <Label htmlFor="name" className="text-sm font-bold mb-3 block text-foreground/70">Project Name *</Label>
           <Input
             id="name"
             type="text"
-            placeholder="My Awesome Project"
-            className="mt-2"
+            placeholder="e.g. E-commerce Mobile UI"
+            className="mt-2 bg-muted/30 border-border focus:ring-primary/20 rounded-xl transition-all h-12"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             disabled={loading}
@@ -102,36 +105,37 @@ export default function NewProjectPage() {
         </div>
 
         <div>
-          <Label htmlFor="description">Description</Label>
+          <Label htmlFor="description" className="text-sm font-bold mb-3 block text-foreground/70">Description</Label>
           <Textarea
             id="description"
             placeholder="Describe your project..."
-            className="mt-2"
-            rows={4}
+            className="mt-2 bg-muted/30 border-border focus:ring-primary/20 rounded-xl transition-all"
+            rows={5}
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             disabled={loading}
           />
         </div>
 
-        <div className="flex gap-4">
-          <Button type="submit" className="rounded-lg" disabled={loading}>
+        <div className="flex gap-4 pt-4">
+          <Button type="submit" className="rounded-xl h-12 px-8 font-bold shadow-lg shadow-primary/20" disabled={loading}>
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Creating...
+                Creating Project...
               </>
             ) : (
               'Create Project'
             )}
           </Button>
           <Link href="/dashboard/projects">
-            <Button type="button" variant="outline" className="rounded-lg" disabled={loading}>
+            <Button type="button" variant="outline" className="rounded-xl h-12 px-8 font-bold border-border" disabled={loading}>
               Cancel
             </Button>
           </Link>
         </div>
       </form>
     </div>
+  </div>
   );
 }

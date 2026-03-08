@@ -80,7 +80,7 @@ function ColumnWidgetComponent({ node, renderChild }: ColumnWidgetProps) {
         }
 
         return (
-          <div key={i} style={{ minWidth: 0, flexShrink: 0, width: '100%' }}>
+          <div key={i} style={{ minWidth: 0, flexShrink: 0, display: 'flex', justifyContent: 'inherit' }}>
             {renderChild(child)}
           </div>
         );

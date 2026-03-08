@@ -37,30 +37,35 @@ export function AdminSidebar() {
 
   return (
     <motion.aside
-      className={cn(
-        'border-r border-white font-black uppercase tracking-widest bg-[#09090b] flex flex-col transition-all duration-300 relative z-30 shadow-[40px_0_80px_rgba(0,0,0,0.5)]',
-        sidebarOpen ? 'w-64' : 'w-20'
-      )}
-      initial={{ x: -20, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.3 }}
+      {...({
+        className: cn(
+          'border-r border-border bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 relative z-30 shadow-none',
+          sidebarOpen ? 'w-64' : 'w-20'
+        ),
+        initial: { x: -20, opacity: 0 },
+        animate: { x: 0, opacity: 1 },
+        transition: { duration: 0.3 }
+      } as any)}
     >
       {/* Background Glow */}
-      <div className="absolute top-0 right-0 w-full h-32 bg-emerald-500/5 blur-[60px] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-full h-32 bg-primary/5 blur-[60px] pointer-events-none" />
 
       {/* Logo */}
       <motion.div
-        className="p-8 border-b border-white/[0.08] flex items-center justify-between relative z-10"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.1 }}
+        {...({
+          className: "p-8 border-b border-border flex items-center justify-between relative z-10",
+          initial: { opacity: 0 },
+          animate: { opacity: 1 },
+          transition: { delay: 0.1 }
+        } as any)}
       >
-        <Link href="/admin" className="flex items-center gap-3">
-          <ShieldAlert className="w-8 h-8 text-emerald-500" />
+        <Link href="/admin" className="flex items-center gap-3 group">
+          <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary/10 text-primary transition-all">
+            <ShieldAlert className="w-5 h-5" />
+          </div>
           {sidebarOpen && (
             <div className="flex flex-col">
-              <span className="text-lg font-black tracking-tighter uppercase italic leading-none text-white">ADMIN</span>
-              <span className="text-[6px] font-black tracking-[0.4em] text-zinc-500 uppercase mt-1">Console_v4.2</span>
+              <span className="text-xl font-bold tracking-tight uppercase leading-none">SDUI Admin</span>
             </div>
           )}
         </Link>
@@ -68,9 +73,9 @@ export function AdminSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-5 space-y-2 overflow-y-auto custom-scrollbar relative z-10">
-        <div className={cn("text-[9px] font-black text-zinc-600 tracking-[0.3em] uppercase mb-6 px-3", !sidebarOpen && "hidden")}>Command_Center</div>
+        <div className={cn("text-[10px] font-bold text-muted-foreground tracking-widest uppercase mb-4 px-3", !sidebarOpen && "hidden")}>Command Center</div>
         {navItems.map(({ href, label, icon: Icon }, idx) => {
-          const isActive = pathname === href || pathname.startsWith(href + '/');
+          const isActive = pathname === href || (href !== '/admin' && pathname.startsWith(href + '/'));
           return (
             <motion.div
               key={href}
@@ -81,19 +86,21 @@ export function AdminSidebar() {
               <Link
                 href={href}
                 className={cn(
-                  'flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 relative group',
+                  'flex items-center gap-4 px-4 py-2.5 rounded-xl transition-all duration-300 relative group',
                   isActive
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
-                    : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.03] border border-transparent'
+                    ? 'bg-primary/10 text-primary border border-primary/20 shadow-[0_4px_20px_rgba(var(--primary-rgb),0.1)]'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent'
                 )}
               >
-                <Icon className={cn("w-5 h-5 flex-shrink-0", isActive ? "text-emerald-500" : "text-zinc-500 group-hover:text-zinc-300 transition-colors")} />
-                {sidebarOpen && <span className="text-[10px] font-black uppercase tracking-widest truncate">{label}</span>}
+                <Icon className={cn("w-4 h-4 flex-shrink-0", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground transition-colors")} />
+                {sidebarOpen && <span className="text-sm font-semibold truncate">{label}</span>}
                 {isActive && (
                   <motion.div
-                    className="absolute right-2 inset-y-2 w-1 bg-emerald-500 rounded-full"
-                    layoutId="adminIndicator"
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    {...({
+                      className: "absolute inset-y-3 right-2 w-1 bg-primary rounded-full",
+                      layoutId: "adminIndicator",
+                      transition: { type: 'spring', stiffness: 300, damping: 30 }
+                    } as any)}
                   />
                 )}
               </Link>
@@ -104,29 +111,31 @@ export function AdminSidebar() {
 
       {/* Footer / Status */}
       <motion.div
-        className="p-5 border-t border-white/[0.08] relative z-10"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
+        {...({
+          className: "p-5 border-t border-border relative z-10 space-y-4",
+          initial: { opacity: 0 },
+          animate: { opacity: 1 },
+          transition: { delay: 0.3 }
+        } as any)}
       >
         <div className={cn(
-          'p-4 rounded-xl bg-white/[0.02] border border-white/[0.05] relative overflow-hidden group',
+          'p-4 rounded-xl bg-muted/30 border border-border relative overflow-hidden group',
           sidebarOpen ? '' : 'flex justify-center'
         )}>
-          <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+           <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
           {sidebarOpen ? (
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest mb-1">Authorization</p>
-                <p className="text-[10px] font-black text-emerald-500 uppercase flex items-center gap-2 italic">
-                  <Terminal className="w-3.5 h-3.5" />
+                <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest mb-1">Authorization</p>
+                <p className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Terminal className="w-4 h-4 text-primary" />
                   Super Admin
                 </p>
               </div>
-              <Activity className="w-4 h-4 text-emerald-500/20 group-hover:text-emerald-500 transition-colors animate-pulse" />
+              <Activity className="w-4 h-4 text-primary/40 group-hover:text-primary transition-colors animate-pulse" />
             </div>
           ) : (
-            <ShieldAlert className="w-5 h-5 text-emerald-500" />
+            <ShieldAlert className="w-5 h-5 text-primary" />
           )}
         </div>
       </motion.div>

@@ -9,6 +9,7 @@ import { Canvas } from './Canvas';
 import { PropertiesPanel } from './PropertiesPanel';
 import { CodeView } from './CodeView';
 import { cn } from '@/lib/utils';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 interface DbLayout {
   id: string;
@@ -98,51 +99,59 @@ export function EditorLayout({
           />
         </div>
       ) : (
-        <div className="flex-1 flex overflow-hidden">
+        <PanelGroup direction="horizontal" className="flex-1 overflow-hidden">
           {sidebarOpen && (
-            <div className="w-64 border-r border-border bg-card flex flex-col overflow-hidden">
-              {/* Tab bar */}
-              <div className="flex shrink-0 border-b border-border">
-                <button
-                  type="button"
-                  onClick={() => setLeftTab('components')}
-                  className={cn(
-                    'flex-1 py-2 text-xs font-medium transition-colors',
-                    leftTab === 'components'
-                      ? 'text-primary border-b-2 border-primary bg-primary/5'
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  Components
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLeftTab('layers')}
-                  className={cn(
-                    'flex-1 py-2 text-xs font-medium transition-colors',
-                    leftTab === 'layers'
-                      ? 'text-primary border-b-2 border-primary bg-primary/5'
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  Layers
-                </button>
-              </div>
-              {/* Tab content */}
-              <div className="flex-1 overflow-y-auto">
-                {leftTab === 'components' ? <ComponentLibrary /> : <LayersPanel />}
-              </div>
-            </div>
+            <>
+              <Panel defaultSize={20} minSize={15} maxSize={30} className="bg-card flex flex-col overflow-hidden border-r border-border">
+                {/* Tab bar */}
+                <div className="flex shrink-0 border-b border-border">
+                  <button
+                    type="button"
+                    onClick={() => setLeftTab('components')}
+                    className={cn(
+                      'flex-1 py-2 text-xs font-medium transition-colors',
+                      leftTab === 'components'
+                        ? 'text-primary border-b-2 border-primary bg-primary/5'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Components
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLeftTab('layers')}
+                    className={cn(
+                      'flex-1 py-2 text-xs font-medium transition-colors',
+                      leftTab === 'layers'
+                        ? 'text-primary border-b-2 border-primary bg-primary/5'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Layers
+                  </button>
+                </div>
+                {/* Tab content */}
+                <div className="flex-1 overflow-y-auto">
+                  {leftTab === 'components' ? <ComponentLibrary /> : <LayersPanel />}
+                </div>
+              </Panel>
+              <PanelResizeHandle className="w-1 bg-transparent hover:bg-primary/50 active:bg-primary transition-colors cursor-col-resize z-10" />
+            </>
           )}
-          <div className="flex-1 flex flex-col overflow-hidden">
+          
+          <Panel className="flex flex-col overflow-hidden">
             <Canvas />
-          </div>
+          </Panel>
+
           {propertiesPanelOpen && (
-            <div className="w-80 border-l border-border bg-card overflow-y-auto">
-              <PropertiesPanel />
-            </div>
+            <>
+              <PanelResizeHandle className="w-1 bg-transparent hover:bg-primary/50 active:bg-primary transition-colors cursor-col-resize z-10" />
+              <Panel defaultSize={25} minSize={20} maxSize={40} className="bg-card overflow-y-auto border-l border-border">
+                <PropertiesPanel />
+              </Panel>
+            </>
           )}
-        </div>
+        </PanelGroup>
       )}
     </div>
   );

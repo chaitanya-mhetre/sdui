@@ -52,10 +52,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   if (!isLoaded || checkingRole) {
     return (
-      <div className="flex h-screen bg-[#050506] text-white items-center justify-center grain-texture">
+      <div className="flex h-screen bg-background text-foreground items-center justify-center grain-texture">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-emerald-500" />
-          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500/60">Initializing_Dashboard...</span>
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary/60">Initializing...</span>
         </div>
       </div>
     );
@@ -66,19 +66,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }
 
   if (isEditorPage) {
-    return <div className="bg-[#050506] text-white min-h-screen grain-texture">{children}</div>;
+    return <div className="bg-background text-foreground min-h-screen grain-texture">{children}</div>;
   }
 
   return (
-    <div className="flex h-screen bg-[#050506] text-white overflow-hidden grain-texture selection:bg-emerald-500/30">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden grain-texture selection:bg-emerald-500/30">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-background/50">
         <TopBar />
-        <main className="flex-1 overflow-auto bg-black/20 backdrop-blur-sm custom-scrollbar">
-          <div className="max-w-7xl mx-auto py-8 px-6 md:px-8 lg:px-12">
+        <main className="flex-1 overflow-auto custom-scrollbar">
+          <div className="max-w-[1600px] mx-auto py-10 px-6 md:px-10 lg:px-16">
             {children}
           </div>
         </main>

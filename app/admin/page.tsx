@@ -75,9 +75,9 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-6">
-          <Loader2 className="w-12 h-12 animate-spin text-emerald-500" />
-          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500/60">Intercepting_Data_Streams...</span>
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary/60">Loading...</span>
         </div>
       </div>
     );
@@ -98,38 +98,42 @@ export default function AdminDashboard() {
     <div className="space-y-12 pb-20">
       {/* Header Cluster */}
       <motion.div
-        className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        {...({
+          className: "flex flex-col md:flex-row items-start md:items-end justify-between gap-6",
+          initial: { opacity: 0, y: -20 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.5 }
+        } as any)}
       >
-        <div className="space-y-4">
+        <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <ShieldCheck className="w-4 h-4 text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 italic">Central_Intelligence_Console</span>
+            <ShieldCheck className="w-5 h-5 text-primary" />
+            <span className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">Central Console</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-white leading-tight">
-            Platform <span className="text-emerald-500 italic">Metrics</span>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground leading-tight">
+            Platform <span className="text-primary">Metrics</span>
           </h1>
-          <p className="text-zinc-500 text-xs font-black uppercase tracking-[0.2em]">Master node overview // Integrity: Verified</p>
+          <p className="text-muted-foreground text-sm font-medium">Master node overview and analytics cluster.</p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="px-6 py-3 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-4">
+          <div className="px-6 py-3 rounded-xl bg-card border border-border flex items-center gap-4">
             <div className="flex flex-col items-end">
-              <span className="text-[8px] font-black uppercase text-zinc-600">Sync_Status</span>
-              <span className="text-[10px] font-black text-emerald-500 italic tracking-widest uppercase">STABLE</span>
+              <span className="text-[10px] font-bold uppercase text-muted-foreground/60">Sync Status</span>
+              <span className="text-xs font-bold text-primary tracking-widest uppercase">STABLE</span>
             </div>
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+            <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]" />
           </div>
         </div>
       </motion.div>
 
       {/* Stats Grid */}
       <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
+        {...({
+          className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6",
+          variants: containerVariants,
+          initial: "hidden",
+          animate: "visible"
+        } as any)}
       >
         {[
           { title: "Total Users", value: displayStats.totalUsers, icon: Users, color: "emerald" },
@@ -138,14 +142,14 @@ export default function AdminDashboard() {
           { title: "API Traffic", value: (displayStats.totalApiRequests / 1000).toFixed(1) + "K", icon: TrendingUp, color: "emerald" }
         ].map((stat, i) => (
           <motion.div key={stat.title} variants={itemVariants}>
-            <div className="p-8 rounded-[2rem] bg-[#0b0b0d] border border-white/[0.08] hover:border-emerald-500/30 hover:shadow-[0_40px_80px_-12px_rgba(0,0,0,0.8)] transition-all group relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-8 text-emerald-500/5 group-hover:text-emerald-500/15 transition-colors">
+              <div className="p-8 rounded-3xl bg-card border border-border hover:border-primary/30 hover:shadow-xl transition-all group relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 text-primary/5 group-hover:text-primary/10 transition-colors">
                 <stat.icon className="w-12 h-12" />
               </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3">{stat.title}</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">{stat.title}</p>
               <div className="flex items-end gap-3">
-                <p className="text-4xl font-black uppercase tracking-tight text-white italic">{stat.value}</p>
-                <span className="text-emerald-500 text-[10px] font-bold mb-2">+12%</span>
+                <p className="text-4xl font-bold tracking-tight text-foreground">{stat.value}</p>
+                <span className="text-primary text-xs font-bold mb-2">+12%</span>
               </div>
             </div>
           </motion.div>
@@ -154,21 +158,23 @@ export default function AdminDashboard() {
 
       {/* Analytics Visualization */}
       <motion.div
-        className="grid grid-cols-1 lg:grid-cols-2 gap-8"
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-100px' }}
+        {...({
+          className: "grid grid-cols-1 lg:grid-cols-2 gap-8",
+          variants: containerVariants,
+          initial: "hidden",
+          whileInView: "visible",
+          viewport: { once: true, margin: '-100px' }
+        } as any)}
       >
         {displayStats.userGrowth && displayStats.userGrowth.length > 0 && (
           <motion.div variants={itemVariants}>
-            <div className="p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/[0.08] backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
+            <div className="p-8 rounded-3xl bg-card border border-border shadow-md relative overflow-hidden group">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                  <Activity className="w-4 h-4 text-emerald-500" />
-                  <h3 className="text-xs font-black uppercase tracking-widest text-white italic">User_Growth_Matrix</h3>
+                  <Activity className="w-5 h-5 text-primary" />
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-foreground">User Growth Matrix</h3>
                 </div>
-                <Users className="w-4 h-4 text-zinc-700 group-hover:text-emerald-500 transition-colors" />
+                <Users className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
               <AdminChart
                 title=""
@@ -182,13 +188,13 @@ export default function AdminDashboard() {
 
         {displayStats.projectGrowth && displayStats.projectGrowth.length > 0 && (
           <motion.div variants={itemVariants}>
-            <div className="p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/[0.08] backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
+            <div className="p-8 rounded-3xl bg-card border border-border shadow-md relative overflow-hidden group">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                  <Box className="w-4 h-4 text-emerald-500" />
-                  <h3 className="text-xs font-black uppercase tracking-widest text-white italic">Deployment_Velocity</h3>
+                  <Box className="w-5 h-5 text-primary" />
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-foreground">Deployment Velocity</h3>
                 </div>
-                <TrendingUp className="w-4 h-4 text-zinc-700 group-hover:text-emerald-500 transition-colors" />
+                <TrendingUp className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
               <AdminChart
                 title=""
@@ -201,15 +207,17 @@ export default function AdminDashboard() {
         )}
 
         <motion.div
-          variants={itemVariants}
-          className="lg:col-span-2 p-10 rounded-[2.5rem] border border-white/[0.08] bg-gradient-to-br from-white/[0.03] to-transparent relative overflow-hidden"
+          {...({
+            variants: itemVariants,
+            className: "lg:col-span-2 p-10 rounded-3xl border border-border bg-gradient-to-br from-muted/20 to-transparent relative overflow-hidden"
+          } as any)}
         >
           <div className="absolute top-0 right-0 p-10 opacity-5">
             <Cpu className="w-32 h-32" />
           </div>
           <div className="flex items-center gap-4 mb-8">
-            <div className="h-0.5 w-8 bg-emerald-500" />
-            <h3 className="text-xl font-black uppercase tracking-widest text-white italic">System Infrastructure Status</h3>
+            <div className="h-0.5 w-8 bg-primary" />
+            <h3 className="text-lg font-bold uppercase tracking-widest text-foreground">System Infrastructure Status</h3>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -218,16 +226,16 @@ export default function AdminDashboard() {
               { label: "Schema Database", status: "Operational", value: "12ms Latency", icon: Database },
               { label: "Global Edge Sync", status: "Operational", value: "Verified", icon: Globe }
             ].map((node, i) => (
-              <div key={i} className="space-y-4 p-6 rounded-2xl bg-black/40 border border-white/[0.05] group hover:border-emerald-500/20 transition-all">
+              <div key={i} className="space-y-4 p-6 rounded-2xl bg-card border border-border group hover:border-primary/20 transition-all shadow-sm">
                 <div className="flex items-center justify-between">
-                  <node.icon className="w-5 h-5 text-zinc-600 group-hover:text-emerald-500 transition-colors" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                  <node.icon className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <div className="w-2 h-2 rounded-full bg-primary shadow-sm" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">{node.label}</p>
-                  <p className="text-sm font-black text-white italic">{node.value}</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">{node.label}</p>
+                  <p className="text-sm font-semibold text-foreground">{node.value}</p>
                 </div>
-                <div className="p-2 rounded-lg bg-emerald-500/5 text-emerald-500 text-[8px] font-black uppercase tracking-widest text-center">
+                <div className="p-2 rounded-lg bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest text-center">
                   {node.status}
                 </div>
               </div>

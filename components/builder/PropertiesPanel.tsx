@@ -71,7 +71,9 @@ function SectionAccordion({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="overflow-hidden"
+            {...{
+              className: "overflow-hidden"
+            } as any}
           >
             <div className="space-y-3 px-4 pb-4 pt-1">{children}</div>
           </motion.div>
@@ -176,6 +178,7 @@ function ScreenSettings() {
 
 export function PropertiesPanel() {
   const selectedNodeId     = useBuilderStore((s) => s.selection.selectedNodeId);
+  const rootNode           = useBuilderStore((s) => s.rootNode); // Subscribe to rootNode to trigger re-renders
   const updateNode         = useBuilderStore((s) => s.updateNode);
   const findNode           = useBuilderStore((s) => s.findNode);
   const platformComponents = useBuilderStore((s) => s.platformComponents);

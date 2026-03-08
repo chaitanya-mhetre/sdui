@@ -12,10 +12,11 @@ import { ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { DeviceFrame } from './DeviceFrame';
+import { DevicePreview } from './DevicePreview';
 import { validateDrop } from '@/lib/flutterRules';
 
 export function Canvas() {
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0.8);
   
   const rootNode = useBuilderStore((state) => state.rootNode);
   const selectedNodeId = useBuilderStore((state) => state.selection.selectedNodeId);
@@ -147,10 +148,12 @@ export function Canvas() {
     >
       {/* Zoom Controls */}
       <motion.div
-        className="absolute bottom-4 right-4 flex items-center gap-2 bg-card border border-border rounded-lg shadow-lg p-2 z-50"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        {...({
+          className: "absolute bottom-4 right-4 flex items-center gap-2 bg-card border border-border rounded-lg shadow-lg p-2 z-50",
+          initial: { opacity: 0, y: 20 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.3 }
+        } as any)}
       >
         <Button
           size="icon"
@@ -176,31 +179,26 @@ export function Canvas() {
       </motion.div>
 
       {/* Device centered, fit to available height/width - no scroll */}
-      <div
-        className="relative flex flex-col items-center shrink-0"
-        style={{
-          width: frameWidth * effectiveScale,
-          height: frameHeight * effectiveScale + 24,
-        }}
-      >
+      {isPreviewMode ? (
+        <DevicePreview effectiveScale={effectiveScale} />
+      ) : (
         <div
-          className="absolute left-1/2 top-0 flex flex-col items-center"
+          className="relative flex flex-col items-center shrink-0"
           style={{
-            width: frameWidth,
-            height: frameHeight,
-            transform: `translateX(-50%) scale(${effectiveScale})`,
-            transformOrigin: 'top center',
+            width: frameWidth * effectiveScale,
+            height: frameHeight * effectiveScale + 24,
           }}
         >
-          <DeviceFrame preset={devicePreset} className="w-full h-full flex flex-col" frameColor={frameColor} screenBackground={screenBackground}>
-            {isPreviewMode ? (
-              <LayoutRenderer
-                node={rootNode}
-                isInteractive={false}
-                selectedNodeId={selectedNodeId}
-                platformComponents={platformComponents}
-              />
-            ) : (
+          <div
+            className="absolute left-1/2 top-1/2 flex flex-col items-center"
+            style={{
+              width: frameWidth,
+              height: frameHeight,
+              transform: `translate(-50%, -50%) scale(${effectiveScale})`,
+              transformOrigin: 'center center',
+            }}
+          >
+            <DeviceFrame preset={devicePreset ?? null} className="w-full h-full flex flex-col" frameColor={frameColor} screenBackground={screenBackground}>
               <LayoutRenderer
                 node={rootNode}
                 isInteractive={true}
@@ -208,13 +206,13 @@ export function Canvas() {
                 selectedNodeId={selectedNodeId}
                 platformComponents={platformComponents}
               />
-            )}
-          </DeviceFrame>
+            </DeviceFrame>
+          </div>
+          <p className="absolute bottom-[-24px] left-1/2 -translate-x-1/2 text-xs text-muted-foreground whitespace-nowrap">
+            {devicePreset?.label ?? 'Phone (Android)'} · {deviceWidth}×{deviceHeight}
+          </p>
         </div>
-        <p className="absolute bottom-0 left-1/2 -translate-x-1/2 text-xs text-muted-foreground whitespace-nowrap">
-          {devicePreset?.label ?? 'Phone (Android)'} · {deviceWidth}×{deviceHeight}
-        </p>
-      </div>
+      )}
     </div>
   );
 }

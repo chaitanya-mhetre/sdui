@@ -167,6 +167,9 @@ importers:
       react-day-picker:
         specifier: 9.13.2
         version: 9.13.2(react@19.2.4)
+      react-device-mockup:
+        specifier: ^1.0.0
+        version: 1.0.0(react@19.2.4)
       react-dom:
         specifier: 19.2.4
         version: 19.2.4(react@19.2.4)
@@ -2309,6 +2312,11 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       react: '>=16.8.0'
+
+  react-device-mockup@1.0.0:
+    resolution: {integrity: sha512-rtLHqMdzs7FsnvYO7yCLbqvJYw8BmHEk6XsMHDQe4sBRU/SXPB3nofpjjXT3Me+MR2ZE3qsa1bVtASLRZwQO9g==}
+    peerDependencies:
+      react: '*'
 
   react-dom@19.2.4:
     resolution: {integrity: sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==}
@@ -4492,6 +4500,10 @@ snapshots:
       '@date-fns/tz': 1.4.1
       date-fns: 4.1.0
       date-fns-jalali: 4.1.0-0
+      react: 19.2.4
+
+  react-device-mockup@1.0.0(react@19.2.4):
+    dependencies:
       react: 19.2.4
 
   react-dom@19.2.4(react@19.2.4):

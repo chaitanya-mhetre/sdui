@@ -8,6 +8,8 @@ import { layoutToCode, codeToLayout } from '@/lib/layoutCode';
 import { parseLayout } from '@/lib/sdui/layoutParser';
 import { apiRequest } from '@/lib/api-client';
 import { FileJson, Plus, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
+import { builderRootToSduiJson } from '@/lib/builderToSdui';
+import { useTheme } from 'next-themes';
 
 // Lazy-load Monaco editor to avoid SSR issues
 const MonacoEditor = dynamic(
@@ -61,6 +63,7 @@ export function CodeView({
   const [layoutJson, setLayoutJson] = useState<string>('');
   const [addingScreen, setAddingScreen] = useState(false);
   const [newScreenName, setNewScreenName] = useState('');
+  const { resolvedTheme } = useTheme();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevLayoutIdRef = useRef<string | null | undefined>(activeLayoutId);
 
@@ -76,28 +79,34 @@ export function CodeView({
     }
   };
 
-  // When Code tab opens (code empty) or user switches screen: sync code from rootNode or sduiJson
+  // When Code tab opens (code empty) or user switches screen: sync code from LIVE rootNode
   useEffect(() => {
     if (prevLayoutIdRef.current !== activeLayoutId || code === '') {
       prevLayoutIdRef.current = activeLayoutId;
-      // Check if we have sduiJson in the layout
-      const currentLayoutData = allLayouts.find((l) => l.id === activeLayoutId) || 
-        (currentLayout && { sduiJson: currentLayout.sduiJson });
       
-      if (currentLayoutData?.sduiJson) {
-        // Use SDUI JSON if available
-        const sduiCode = JSON.stringify(currentLayoutData.sduiJson, null, 2);
-        setCode(sduiCode);
-        setLayoutJson(sduiCode);
-        setParseError(null);
-      } else if (rootNode) {
-        // Fall back to builder format
-        setCode(layoutToCode(rootNode));
+      if (rootNode) {
+        // Design view is the source of truth for the session.
+        // Convert the LIVE layout tree immediately to SDUI format.
+        try {
+          // You must import builderRootToSduiJson at the top
+          const sduiPayload = builderRootToSduiJson(rootNode);
+          const sduiCode = JSON.stringify(sduiPayload, null, 2);
+          setCode(sduiCode);
+          setLayoutJson(sduiCode);
+          setParseError(null);
+        } catch (e) {
+          console.error("Failed to convert rootNode to SDUI JSON", e);
+          // Fallback if conversion fails
+          setCode(layoutToCode(rootNode));
+          setLayoutJson('');
+          setParseError(null);
+        }
+      } else {
+        setCode('');
         setLayoutJson('');
-        setParseError(null);
       }
     }
-  }, [activeLayoutId, rootNode, code, allLayouts, currentLayout]);
+  }, [activeLayoutId, rootNode, code]);
 
   const handleCodeChange = (value: string | undefined) => {
     const v = value ?? '';
@@ -312,7 +321,7 @@ export function CodeView({
             language="json"
             value={code}
             onChange={handleCodeChange}
-            theme="vs-dark"
+            theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
             options={{
               minimap: { enabled: false },
               fontSize: 13,

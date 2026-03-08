@@ -54,29 +54,32 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 border-r border-white/[0.08] bg-[#09090b] text-white flex flex-col relative z-20">
+    <aside className="w-64 border-r border-border bg-sidebar text-sidebar-foreground flex flex-col relative z-20">
       {/* Glow Effect */}
-      <div className="absolute top-0 left-0 w-full h-32 bg-emerald-500/5 blur-[60px] pointer-events-none" />
+      <div className="absolute top-0 left-0 w-full h-32 bg-primary/5 blur-[60px] pointer-events-none" />
 
       {/* Logo */}
       <motion.div
-        className="p-8 border-b border-white/[0.08] relative z-10"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
+        {...({
+          className: "p-8 border-b border-border relative z-10",
+          initial: { opacity: 0, y: -10 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.35 }
+        } as any)}
       >
         <Link href="/" className="flex items-center gap-3 group">
-          <Sparkles className="w-6 h-6 text-emerald-500 group-hover:scale-110 transition-transform" />
+            <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl hover:bg-primary/5 hover:text-primary transition-all">
+              <Sparkles className="w-4 h-4" />
+            </Button>
           <div className="flex flex-col">
-            <span className="text-lg font-black tracking-tighter uppercase italic leading-none">SDUI</span>
-            <span className="text-[6px] font-black tracking-[0.4em] text-zinc-500 uppercase mt-1">v4.2 Industrial</span>
+            <span className="text-xl font-bold tracking-tight uppercase leading-none">SDUI</span>
           </div>
         </Link>
       </motion.div>
 
       {/* Navigation */}
       <nav className="flex-1 p-5 space-y-2 relative z-10">
-        <div className="text-[10px] font-black text-zinc-500 tracking-[0.3em] uppercase mb-4 px-3">Main_Menu</div>
+        <div className="text-[10px] font-bold text-muted-foreground tracking-widest uppercase mb-4 px-3">Main Menu</div>
         {links.map(({ href, label, icon: Icon }, idx) => {
           const isActive = pathname === href;
           return (
@@ -89,19 +92,21 @@ export function Sidebar() {
               <Link
                 href={href}
                 className={cn(
-                  'flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 relative group',
+                  'flex items-center gap-4 px-4 py-2.5 rounded-xl transition-all duration-300 relative group',
                   isActive
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
-                    : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.03] border border-transparent'
+                    ? 'bg-primary/10 text-primary border border-primary/20 shadow-[0_4px_20px_rgba(var(--primary-rgb),0.1)]'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent'
                 )}
               >
-                <Icon className={cn("w-5 h-5", isActive ? "text-emerald-500" : "text-zinc-500 group-hover:text-zinc-300 transition-colors")} />
-                <span className="text-[11px] font-black uppercase tracking-widest">{label}</span>
+                <Icon className={cn("w-4 h-4", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground transition-colors")} />
+                <span className="text-sm font-semibold">{label}</span>
                 {isActive && (
                   <motion.div
-                    className="absolute inset-y-2 right-2 w-1 bg-emerald-500 rounded-full"
-                    layoutId="sidebarIndicator"
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    {...({
+                      className: "absolute inset-y-3 right-2 w-1 bg-primary rounded-full",
+                      layoutId: "sidebarIndicator",
+                      transition: { type: 'spring', stiffness: 300, damping: 30 }
+                    } as any)}
                   />
                 )}
               </Link>
@@ -109,64 +114,55 @@ export function Sidebar() {
           );
         })}
 
-        <div className="pt-8 px-3">
-          <div className="text-[10px] font-black text-zinc-500 tracking-[0.3em] uppercase mb-4">Diagnostics</div>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-zinc-600">
-              <span>Cluster Status</span>
-              <span className="text-emerald-500 flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Secure
-              </span>
-            </div>
-          </div>
-        </div>
+
       </nav>
 
       {/* Footer */}
       <motion.div
-        className="p-5 border-t border-white/[0.08] space-y-4 relative z-10"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, delay: 0.2 }}
+        {...({
+          className: "p-5 border-t border-border space-y-4 relative z-10",
+          initial: { opacity: 0, y: 10 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.35, delay: 0.2 }
+        } as any)}
       >
-        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.05] relative overflow-hidden group">
-          <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Active_Plan</p>
+        <div className="p-4 rounded-xl bg-muted/30 border border-border relative overflow-hidden group">
+          <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest mb-1">Active Plan</p>
           <div className="flex items-center justify-between">
-            <p className="text-xs font-black uppercase text-white tracking-widest italic flex items-center gap-2">
-              <Shield className="w-3.5 h-3.5 text-emerald-500" />
+            <p className="text-sm font-bold text-foreground flex items-center gap-2">
+              <Shield className="w-4 h-4 text-primary" />
               Standard
             </p>
-            <span className="text-[9px] font-black text-emerald-500/60 uppercase group-hover:text-emerald-400 transition-colors">Upgrade</span>
+            <span className="text-[10px] font-bold text-primary/80 uppercase group-hover:text-primary transition-colors cursor-pointer">Upgrade</span>
           </div>
         </div>
 
         <button
           onClick={() => setShowLogoutDialog(true)}
-          className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-zinc-500 hover:bg-red-500/10 hover:text-red-400 border border-transparent hover:border-red-500/20 transition-all group"
+          className="w-full flex items-center gap-4 px-4 py-2.5 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive border border-transparent hover:border-destructive/20 transition-all group"
         >
           <LogOut className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-          <span className="text-[11px] font-black uppercase tracking-widest">Terminate_Session</span>
+          <span className="text-sm font-semibold">Log out</span>
         </button>
       </motion.div>
 
       {/* Logout Confirmation Dialog */}
       <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <AlertDialogContent className="bg-[#0b0b0d] border border-white/10 rounded-2xl">
+        <AlertDialogContent className="bg-background border border-border rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl font-black uppercase text-white tracking-tight">Terminate Session?</AlertDialogTitle>
-            <AlertDialogDescription className="text-zinc-400 font-medium">
-              You are about to terminate your authenticated session with the SDUI Control Plane.
+            <AlertDialogTitle className="text-xl font-bold text-foreground">Sign out?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-medium">
+              Are you sure you want to sign out of your SDUI account?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl font-black uppercase tracking-widest text-[10px]">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl font-semibold">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleLogout}
-              className="bg-red-500 text-white hover:bg-red-600 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl font-semibold"
             >
-              Confirm_Log_Out
+              Sign out
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

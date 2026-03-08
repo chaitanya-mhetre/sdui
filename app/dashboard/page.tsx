@@ -124,8 +124,8 @@ export default function DashboardPage() {
     return (
       <div className="p-8 flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-6">
-          <Loader2 className="w-12 h-12 animate-spin text-emerald-500" />
-          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500/60">Fetching_System_State...</span>
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-[0.3em]">Loading...</span>
         </div>
       </div>
     );
@@ -136,23 +136,19 @@ export default function DashboardPage() {
   return (
     <div className="space-y-12 pb-20">
       {/* Header Cluster */}
-      <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Live_Dashboard_v4</span>
-          </div>
-          <h1 className="text-4xl font-black uppercase tracking-tight text-white leading-tight">
-            Control <span className="text-emerald-500 italic">Plane</span> Overview
+      <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 px-1">
+        <div className="space-y-3">
+          <h1 className="text-3xl font-bold text-foreground tracking-tight leading-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+            Main <span className="text-primary">Dashboard</span>
           </h1>
-          <p className="text-zinc-500 text-sm font-semibold uppercase tracking-widest">
-            Welcome back, operator <span className="text-zinc-300">[{user?.name || user?.email}]</span>
+          <p className="text-muted-foreground text-sm font-medium">
+            Welcome back, <span className="text-foreground border-b border-primary/10">{user?.name || user?.email}</span>
           </p>
         </div>
         <Link href="/dashboard/projects/new">
-          <Button className="bg-emerald-500 text-black hover:bg-emerald-400 font-black uppercase tracking-widest text-[10px] h-12 px-8 rounded-xl shadow-[0_0_30px_rgba(16,185,129,0.2)] active:scale-95 transition-all gap-3">
+          <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase tracking-wider text-[10px] h-11 px-8 rounded-xl shadow-lg shadow-primary/10 active:scale-[0.98] transition-all gap-2 border-none">
             <Plus className="w-4 h-4" />
-            Initialize Project
+            Create Project
           </Button>
         </Link>
       </div>
@@ -160,48 +156,47 @@ export default function DashboardPage() {
       {/* Stats Topology */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: "Active Projects", value: stats.totalProjects, icon: Box, color: "emerald" },
-          { label: "Synced Layouts", value: stats.totalLayouts, icon: Zap, color: "emerald" },
-          { label: "Propagation Delay", value: "14ms", icon: Activity, color: "emerald" },
-          { label: "Plan Status", value: user?.plan || 'Free', icon: Shield, color: "emerald" }
+          { label: "Active Projects", value: stats.totalProjects, icon: Box },
+          { label: "Total Layouts", value: stats.totalLayouts, icon: Zap },
+          { label: "Latency", value: "14ms", icon: Activity },
+          { label: "Plan Type", value: user?.plan || 'Free', icon: Shield }
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="p-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.05] hover:border-emerald-500/30 transition-all group relative overflow-hidden"
+            {...({
+              initial: { opacity: 0, y: 10 },
+              animate: { opacity: 1, y: 0 },
+              transition: { delay: i * 0.05 },
+              className: "premium-card p-6 rounded-xl border-none relative overflow-hidden group cursor-default"
+            } as any)}
           >
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-opacity">
-              <stat.icon className="w-8 h-8 text-emerald-500" />
+            <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
+              <stat.icon className="w-8 h-8 text-primary" />
             </div>
-            <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-2">{stat.label}</p>
-            <p className="text-3xl font-black uppercase tracking-tighter text-white italic">{stat.value}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-2">{stat.label}</p>
+            <p className="text-2xl font-bold text-foreground tracking-tight">{stat.value}</p>
           </motion.div>
         ))}
       </div>
 
       {/* Primary Workspace: Projects */}
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <div className="h-0.5 w-8 bg-emerald-500" />
-          <h2 className="text-xl font-black uppercase tracking-widest text-white italic">Recent Projects</h2>
-        </div>
+        <h2 className="text-xl font-bold text-foreground tracking-tight px-1">Recent Projects</h2>
 
         {projects.length === 0 ? (
-          <div className="bg-white/[0.02] border border-white/[0.05] rounded-[3rem] p-24 text-center group cursor-pointer hover:bg-white/[0.03] transition-all border-dashed">
-            <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center mx-auto mb-8 group-hover:scale-110 transition-transform">
-              <Plus className="w-8 h-8 text-zinc-500" />
+          <div className="premium-card rounded-2xl p-24 text-center group cursor-pointer hover:bg-muted/30 border-dashed border">
+            <div className="w-16 h-16 rounded-2xl bg-muted border border-border flex items-center justify-center mx-auto mb-8 group-hover:scale-105 group-hover:bg-primary/10 group-hover:border-primary/20 transition-all duration-300">
+              <Plus className="w-8 h-8 text-muted-foreground group-hover:text-primary" />
             </div>
-            <p className="text-zinc-500 font-black uppercase tracking-widest text-sm mb-10 italic">No mission data available</p>
+            <p className="text-muted-foreground font-bold text-lg mb-8">No projects found. Let's build something.</p>
             <Link href="/dashboard/projects/new">
-              <Button size="lg" className="bg-white text-black hover:bg-emerald-400 font-black uppercase tracking-widest text-xs h-14 px-12 rounded-2xl shadow-2xl transition-all active:scale-95">
-                START_YOUR_FIRST_MISSION
+              <Button size="lg" className="bg-primary text-primary-foreground hover:shadow-xl hover:shadow-primary/15 font-bold uppercase tracking-wider text-xs h-12 px-10 rounded-xl transition-all active:scale-[0.98]">
+                Create Your First Project
               </Button>
             </Link>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {projects.map((project, idx) => (
               <motion.div
                 key={project.id}
@@ -210,34 +205,34 @@ export default function DashboardPage() {
                 transition={{ delay: 0.3 + idx * 0.05 }}
               >
                 <Link href={`/dashboard/editor/${project.id}`}>
-                  <div className="h-full bg-[#0b0b0d] border border-white/[0.08] rounded-[2rem] p-8 hover:border-emerald-500/40 hover:shadow-[0_40px_80px_-12px_rgba(0,0,0,0.8)] transition-all cursor-pointer group flex flex-col justify-between relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-8 text-emerald-500/5 group-hover:text-emerald-500/20 transition-colors">
-                      <Cpu className="w-12 h-12" />
+                  <div className="premium-card h-full rounded-2xl p-8 hover:shadow-[0_15px_40px_rgba(0,0,0,0.06)] dark:hover:shadow-2xl transition-all cursor-pointer group flex flex-col justify-between relative overflow-hidden border-none text-card-foreground">
+                    <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-30 transition-opacity">
+                      <Cpu className="w-20 h-20 text-primary" />
                     </div>
                     <div>
                       <div className="flex items-end justify-between mb-8">
-                        <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.1] flex items-center justify-center group-hover:bg-emerald-500/10 group-hover:border-emerald-500/20 transition-all">
-                          <Box className="w-6 h-6 text-zinc-500 group-hover:text-emerald-500" />
+                        <div className="w-12 h-12 rounded-xl bg-muted border border-border flex items-center justify-center group-hover:bg-primary/10 group-hover:border-primary/20 transition-all duration-300">
+                          <Box className="w-6 h-6 text-muted-foreground group-hover:text-primary" />
                         </div>
-                        <ArrowRight className="w-6 h-6 text-zinc-700 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
+                        <ArrowRight className="w-6 h-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1.5 transition-all duration-300" />
                       </div>
-                      <h3 className="text-xl font-black uppercase tracking-tight text-white mb-4 italic group-hover:text-emerald-400 transition-colors">
+                      <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
                         {project.name}
                       </h3>
                       {project.description && (
-                        <p className="text-sm text-zinc-500 font-medium leading-relaxed line-clamp-2 italic">
+                        <p className="text-sm text-muted-foreground font-medium leading-relaxed line-clamp-2">
                           {project.description}
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-widest text-zinc-600 pt-8 mt-8 border-t border-white/[0.05]">
+                    <div className="flex items-center gap-5 text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest pt-8 mt-8 border-t border-border/40">
                       <span className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/40" />
+                        <div className="w-2 h-2 rounded-full bg-primary/60" />
                         {project.layoutCount || 0} Layouts
                       </span>
                       <span>•</span>
-                      <span className="group-hover:text-zinc-400 transition-colors">
-                        UP_ {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })}
+                      <span className="group-hover:text-foreground transition-colors">
+                        {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })}
                       </span>
                     </div>
                   </div>
@@ -251,38 +246,38 @@ export default function DashboardPage() {
       {/* Platform Protocol: Components */}
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <div className="h-0.5 w-8 bg-emerald-500" />
-          <h2 className="text-xl font-black uppercase tracking-widest text-white italic">Platform Registry</h2>
+          <div className="h-0.5 w-8 bg-primary" />
+          <h2 className="text-xl font-bold text-foreground">Platform Registry</h2>
         </div>
 
         {components.length === 0 ? (
-          <div className="bg-white/[0.02] border border-white/[0.05] rounded-3xl p-12 text-center">
-            <LayoutGrid className="w-10 h-10 mx-auto text-zinc-700 mb-6" />
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 italic">No external component nodes detected</p>
+          <div className="bg-card border border-border rounded-xl p-12 text-center">
+            <LayoutGrid className="w-10 h-10 mx-auto text-muted-foreground/30 mb-6" />
+            <p className="text-xs font-medium text-muted-foreground">No platform components found</p>
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {components.map((comp) => (
               <div
                 key={comp.id}
-                className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-6 hover:bg-white/[0.05] transition-all group"
+                className="bg-card border border-border rounded-2xl p-6 hover:bg-muted/50 transition-all group"
               >
                 <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-xl bg-black border border-white/5 group-hover:scale-110 transition-transform">
-                    <LayoutGrid className="w-5 h-5 text-zinc-500 group-hover:text-emerald-500" />
+                  <div className="p-3 rounded-xl bg-background border border-border group-hover:scale-110 transition-transform">
+                    <LayoutGrid className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-black uppercase tracking-tight text-white mb-2 group-hover:text-emerald-400 truncate">{comp.name}</h3>
+                    <h3 className="text-sm font-bold text-foreground mb-2 group-hover:text-primary truncate">{comp.name}</h3>
                     <div className="flex flex-wrap gap-2 mb-3">
-                      <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded bg-white/5 text-zinc-500 group-hover:text-zinc-300">
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded bg-muted text-muted-foreground">
                         <Tag className="w-3 h-3" />
                         {comp.category}
                       </span>
-                      <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded bg-emerald-500/10 text-emerald-500">v{comp.version}</span>
+                      <span className="text-[10px] font-bold px-2 py-1 rounded bg-primary/10 text-primary">v{comp.version}</span>
                     </div>
-                    <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-[0.2em] text-zinc-600">
-                      <span>{comp.usageCount} Deployments</span>
-                      <span className="text-emerald-500/60">{comp.visibility}</span>
+                    <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                      <span>{comp.usageCount} Usage</span>
+                      <span className="text-primary/80">{comp.visibility}</span>
                     </div>
                   </div>
                 </div>

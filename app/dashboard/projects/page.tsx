@@ -15,7 +15,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 interface Project {
   id: string;
@@ -37,6 +45,7 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+  const [selectedProjectForKey, setSelectedProjectForKey] = useState<Project | null>(null);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -148,8 +157,8 @@ export default function ProjectsPage() {
     return (
       <div className="p-8 flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-6">
-          <Loader2 className="w-12 h-12 animate-spin text-emerald-500" />
-          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500/60 text-center">Materializing_Project_Registry...</span>
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-[0.3em] text-center">Loading Projects...</span>
         </div>
       </div>
     );
@@ -159,26 +168,28 @@ export default function ProjectsPage() {
     <div className="space-y-12 pb-20">
       {/* Header Cluster */}
       <motion.div
-        className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        {...({
+          className: "flex flex-col md:flex-row items-start md:items-end justify-between gap-6",
+          initial: { opacity: 0, y: -20 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.5 }
+        } as any)}
       >
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <Layout className="w-4 h-4 text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 italic">Central Deployment Hub</span>
+            <Layout className="w-4 h-4 text-primary" />
+            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/80">Project Workspace</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-white leading-tight">
-            Active <span className="text-emerald-500 italic">Projects</span>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight leading-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+            Your <span className="text-primary">Projects</span>
           </h1>
-          <p className="text-zinc-500 text-xs font-black uppercase tracking-[0.2em]">Manage your global UI nodes // Total: {projects.length}</p>
+          <p className="text-muted-foreground text-sm font-medium">Manage and build your UI project collection</p>
         </div>
         <Link href="/dashboard/projects/new">
-          <button className="group relative px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all active:scale-95 shadow-[0_20px_40px_rgba(16,185,129,0.2)] flex items-center gap-3">
+          <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase tracking-wider text-[10px] h-11 px-8 rounded-xl shadow-lg shadow-primary/10 active:scale-[0.98] transition-all gap-2 border-none">
             <Plus className="w-4 h-4" />
-            Create_New_Node
-          </button>
+            New Project
+          </Button>
         </Link>
       </motion.div>
 
@@ -186,91 +197,74 @@ export default function ProjectsPage() {
       <AnimatePresence mode="popLayout">
         {projects.length === 0 ? (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="p-16 rounded-[3rem] border border-white/[0.08] bg-white/[0.02] flex flex-col items-center justify-center text-center backdrop-blur-3xl"
+            {...({
+              initial: { opacity: 0, scale: 0.95 },
+              animate: { opacity: 1, scale: 1 },
+              className: "rounded-2xl border border-border bg-card overflow-hidden backdrop-blur-3xl shadow-xl p-16 flex flex-col items-center justify-center text-center"
+            } as any)}
           >
-            <div className="w-20 h-20 rounded-[2rem] bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-10">
-              <Plus className="w-10 h-10 text-emerald-500" />
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-8">
+              <Plus className="w-8 h-8 text-primary" />
             </div>
-            <h2 className="text-2xl font-black uppercase tracking-tight text-white mb-4 italic">Registry Empty</h2>
-            <p className="text-zinc-500 text-sm font-bold uppercase tracking-widest leading-relaxed max-w-sm mb-10">
-              Initiate your first project node to begin large-scale UI distribution.
+            <h2 className="text-xl font-bold text-foreground mb-3">No Projects</h2>
+            <p className="text-muted-foreground text-sm font-medium leading-relaxed max-w-sm mb-8">
+              Create your first project to start building and distributing your UI.
             </p>
             <Link href="/dashboard/projects/new">
-              <button className="px-10 py-4 border border-white/[0.1] hover:bg-white/[0.05] text-white rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all">Initialize_Primary_Sequence</button>
+              <button className="px-8 py-3 border border-border hover:bg-muted text-foreground rounded-xl font-bold uppercase tracking-wider text-[10px] transition-all">Create Project</button>
             </Link>
           </motion.div>
         ) : (
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            initial="hidden"
-            animate="visible"
-            variants={{
-              visible: { transition: { staggerChildren: 0.1 } }
-            }}
+            {...({
+              className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8",
+              initial: "hidden",
+              animate: "visible",
+              variants: {
+                visible: { transition: { staggerChildren: 0.1 } }
+              }
+            } as any)}
           >
             {projects.map((project) => (
               <motion.div
                 key={project.id}
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 }
-                }}
-                className="group p-8 rounded-[2.5rem] bg-[#0b0b0d] border border-white/[0.08] hover:border-emerald-500/30 hover:shadow-[0_40px_80px_-12px_rgba(0,0,0,0.8)] transition-all relative overflow-hidden flex flex-col"
+                {...({
+                  variants: {
+                    hidden: { opacity: 0, y: 20 },
+                    visible: { opacity: 1, y: 0 }
+                  },
+                  className: "group p-6 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-xl transition-all relative overflow-hidden flex flex-col"
+                } as any)}
               >
-                {/* Visual Accent */}
-                <div className="absolute top-0 right-0 p-8 text-emerald-500/5 group-hover:text-emerald-500/15 transition-colors">
-                  <Globe className="w-12 h-12" />
-                </div>
+
 
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500/60 italic">Node_Active</span>
+                  <div className="flex items-center gap-2 mb-6">
+                    <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-primary/10 text-primary">Live</span>
                   </div>
 
-                  <h3 className="text-2xl font-black uppercase tracking-tight text-white mb-3 italic truncate group-hover:text-emerald-400 transition-colors">
+                  <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors truncate">
                     {project.name}
                   </h3>
-                  <p className="text-zinc-500 text-xs font-medium line-clamp-2 leading-relaxed mb-8">
-                    {project.description || 'No operational parameters defined for this node cluster.'}
+                  <p className="text-muted-foreground text-sm font-medium line-clamp-2 leading-relaxed mb-8">
+                    {project.description || 'No description available for this project.'}
                   </p>
 
-                  {/* API Configuration */}
-                  {project.apiKey && (
-                    <div className="mb-8 p-4 rounded-2xl bg-black border border-white/[0.05] group/key">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Terminal className="w-3 h-3 text-zinc-600" />
-                          <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-600">Access_Protocol_Key</span>
-                        </div>
-                        <button
-                          onClick={(e) => handleCopyApiKey(project.apiKey!, project.id, e)}
-                          className="text-emerald-500/40 hover:text-emerald-500 transition-colors"
-                        >
-                          {copiedKeyId === project.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                        </button>
-                      </div>
-                      <div className="text-[10px] font-black text-zinc-400 font-mono truncate tracking-tight bg-white/[0.02] p-2 rounded-lg">
-                        {project.apiKey}
-                      </div>
-                    </div>
-                  )}
 
-                  <div className="grid grid-cols-2 gap-4 mb-8">
+
+                  <div className="grid grid-cols-2 gap-4 mb-8 text-xs font-semibold text-muted-foreground">
                     <div className="space-y-1">
-                      <span className="text-[8px] font-black uppercase tracking-widest text-zinc-600">Capacity</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">Capacity</span>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-black text-white italic">{project.layoutCount || 0}</span>
-                        <span className="text-[8px] font-black text-zinc-500 uppercase">Layouts</span>
+                        <span className="text-sm font-bold text-foreground">{project.layoutCount || 0}</span>
+                        <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">Layouts</span>
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <span className="text-[8px] font-black uppercase tracking-widest text-zinc-600">Last_Sync</span>
-                      <div className="flex items-center gap-2 text-zinc-500">
-                        <Clock className="w-3 h-3" />
-                        <span className="text-[8px] font-black uppercase tracking-widest truncate">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">Last Update</span>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span className="truncate">
                           {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })}
                         </span>
                       </div>
@@ -280,27 +274,42 @@ export default function ProjectsPage() {
 
                 <div className="flex gap-3">
                   <Link href={`/dashboard/editor/${project.id}`} className="flex-1">
-                    <button className="w-full py-3.5 bg-white text-black hover:bg-emerald-400 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all active:scale-95">
-                      Configure_Control_Plane
-                    </button>
+                    <Button className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-bold uppercase tracking-wider text-[10px] transition-all active:scale-[0.98] border-none">
+                      Open Editor
+                    </Button>
                   </Link>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="w-12 h-12 flex items-center justify-center bg-white/5 border border-white/[0.1] text-zinc-400 hover:text-white hover:bg-white/10 rounded-xl transition-all">
+                      <button className="w-12 h-12 flex items-center justify-center bg-muted/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-all">
                         {deletingId === project.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />
+                          <Loader2 className="w-4 h-4 animate-spin text-primary" />
                         ) : (
                           <MoreVertical className="w-4 h-4" />
                         )}
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-[#0b0b0d] border-white/10 rounded-xl p-2 min-w-[160px]">
+                    <DropdownMenuContent align="end" className="bg-card border-border rounded-xl p-2 min-w-[200px]">
                       <DropdownMenuItem
-                        className="text-red-400 focus:text-red-400 focus:bg-red-500/10 cursor-pointer rounded-lg font-black uppercase tracking-widest text-[9px] p-3 gap-3"
+                        className="cursor-pointer rounded-lg font-bold uppercase tracking-wider text-[10px] p-3 gap-3"
+                        onClick={() => setSelectedProjectForKey(project)}
+                      >
+                        <Shield className="w-4 h-4 text-primary" />
+                        View API Key
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="cursor-pointer rounded-lg font-bold uppercase tracking-wider text-[10px] p-3 gap-3"
+                        onClick={(e) => handleCopyApiKey(project.apiKey!, project.id, e as any)}
+                      >
+                        {copiedKeyId === project.id ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
+                        Copy API Key
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="bg-border/50" />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer rounded-lg font-bold uppercase tracking-wider text-[10px] p-3 gap-3"
                         onClick={() => handleDelete(project.id)}
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Decommission_Node
+                        <Trash2 className="w-4 h-4" />
+                        Delete Project
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -310,6 +319,50 @@ export default function ProjectsPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* API Key Dialog */}
+      <Dialog open={!!selectedProjectForKey} onOpenChange={(open) => !open && setSelectedProjectForKey(null)}>
+        <DialogContent className="sm:max-w-md bg-card border-border rounded-3xl p-8">
+          <DialogHeader className="mb-6">
+            <DialogTitle className="text-2xl font-bold tracking-tight">Project API Key</DialogTitle>
+            <DialogDescription className="text-muted-foreground font-medium pt-2">
+              Use this key to authenticate your requests from the SDK or direct API calls for <span className="text-foreground font-bold">{selectedProjectForKey?.name}</span>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="p-6 rounded-2xl bg-muted/50 border border-border group relative">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Terminal className="w-4 h-4 text-primary" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Production Key</span>
+                </div>
+                <button
+                  onClick={(e) => handleCopyApiKey(selectedProjectForKey?.apiKey!, selectedProjectForKey?.id!, e as any)}
+                  className="p-2 rounded-lg bg-background border border-border hover:border-primary/50 text-muted-foreground hover:text-primary transition-all shadow-sm"
+                >
+                  {copiedKeyId === selectedProjectForKey?.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
+              <div className="text-xs font-semibold text-foreground break-all bg-background/50 p-4 rounded-xl border border-border leading-relaxed tracking-tight group-hover:border-primary/20 transition-all">
+                {selectedProjectForKey?.apiKey}
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/10">
+              <Shield className="w-5 h-5 text-primary flex-shrink-0" />
+              <p className="text-[11px] font-bold text-primary/80 leading-snug">
+                KEEP THIS KEY SECURE. Do not share it in public repositories or client-side code where it might be exposed.
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end pt-4">
+            <Button 
+              onClick={() => setSelectedProjectForKey(null)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-8 rounded-xl h-12"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

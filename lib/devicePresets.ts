@@ -37,10 +37,11 @@ export interface DevicePresetConfig {
 }
 
 export const DEVICE_PRESETS: DevicePresetConfig[] = [
+  // Phones
   {
     id: 'phone-android',
-    label: 'Galaxy S24',
-    shortLabel: 'S24',
+    label: 'Android Standard',
+    shortLabel: 'Android',
     type: 'phone',
     platform: 'android',
     width: 360,
@@ -53,24 +54,26 @@ export const DEVICE_PRESETS: DevicePresetConfig[] = [
   },
   {
     id: 'phone-iphone',
-    label: 'iPhone 17',
-    shortLabel: 'iPhone 17',
+    label: 'iPhone Standard',
+    shortLabel: 'iPhone',
     type: 'phone',
     platform: 'iphone',
-    width: 393,
-    height: 852,
+    width: 390,
+    height: 844,
     dpr: 3.0,
-    statusBarHeight: 54,
+    statusBarHeight: 47,
     navigationBarHeight: 34,
-    safeArea: { top: 54, bottom: 34, left: 0, right: 0 },
-    frameClass: 'rounded-[2rem]',
+    safeArea: { top: 47, bottom: 34, left: 0, right: 0 },
+    frameClass: 'rounded-[2.5rem]',
   },
+
+  // Tablets
   {
-    id: 'tablet-android',
-    label: 'Pixel Tablet',
+    id: 'tablet',
+    label: 'Tablet',
     shortLabel: 'Tablet',
     type: 'tablet',
-    platform: 'android',
+    platform: 'android', // General tablet
     width: 768,
     height: 1024,
     dpr: 2.0,
@@ -80,19 +83,35 @@ export const DEVICE_PRESETS: DevicePresetConfig[] = [
     frameClass: 'rounded-xl',
   },
   {
-    id: 'tablet-iphone',
-    label: 'iPad Air',
+    id: 'tablet-ipad-pro',
+    label: 'iPad Pro',
     shortLabel: 'iPad',
     type: 'tablet',
     platform: 'iphone',
-    width: 820,
-    height: 1180,
+    width: 1024,
+    height: 1366,
     dpr: 2.0,
     statusBarHeight: 24,
     navigationBarHeight: 20,
     safeArea: { top: 24, bottom: 20, left: 0, right: 0 },
     frameClass: 'rounded-2xl',
   },
+  
+  // Custom Responsive Handle
+  {
+    id: 'responsive',
+    label: 'Responsive Resize',
+    shortLabel: 'Responsive',
+    type: 'tablet',
+    platform: 'android', // Generic platform
+    width: 400, // Default width, resizable
+    height: 800, // Default height, resizable
+    dpr: 2.0, // Default DPR
+    statusBarHeight: 24,
+    navigationBarHeight: 0,
+    safeArea: { top: 24, bottom: 0, left: 0, right: 0 },
+    frameClass: 'rounded-xl',
+  }
 ];
 
 export function getDevicePreset(id: string): DevicePresetConfig | undefined {
