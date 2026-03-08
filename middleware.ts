@@ -14,6 +14,8 @@ const isPublicRoute = createRouteMatcher([
   '/api/auth/register(.*)', // Public registration
   '/api/auth/login(.*)', // Public login
   '/api/v1/screens(.*)', // Public Flutter SDK endpoint
+  '/sitemap.xml',
+  '/robots.txt',
 ]);
 
 // API routes that handle their own authentication

@@ -55,8 +55,9 @@ function DeviceMockup({ active, type = "phone", loading = false, id_prefix = "" 
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500">Live Traffic</span>
                 </div>
+                {/* ... existing chart code ... */}
                 {[45, 75, 40, 95, 65, 85, 70].map((h, i) => (
-                  <motion.div key={i} {...({ initial: { height: 0 }, animate: { height: `${h}%` }, transition: { delay: i * 0.05, ease: "easeOut" }, className: "flex-1 bg-gradient-to-t from-emerald-500/30 to-emerald-500/5 rounded-t-md hover:from-emerald-400 transition-all cursor-pointer" } as any)} />
+                  <motion.div key={i} {...({ initial: { height: 0 }, animate: { height: `${h}%` }, transition: { delay: i * 0.05, ease: "easeOut" }, className: "flex-1 bg-gradient-to-t from-emerald-500/30 to-emerald-500/5 rounded-t-md hover:from-emerald-400 transition-all cursor-pointer", "aria-label": `Bar chart data ${i}` } as any)} />
                 ))}
               </div>
 
@@ -372,8 +373,8 @@ export default function Home() {
                   <Badge className="mb-8 md:mb-10">Propagating Across 420 Edge Nodes</Badge>
                 </motion.div>
                 <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5rem] font-black tracking-[-0.03em] leading-[1.05] mb-6 md:mb-8 text-white select-none">
-                  Streamline<br />
-                  Delivery <RotatingWord />
+                  Build Native UI<br />
+                  Orchestrated <RotatingWord />
                 </h1>
                 <div className="flex flex-col items-center gap-6 md:gap-8">
                   <p className="text-zinc-300 max-w-2xl mx-auto text-base md:text-lg lg:text-xl font-medium leading-relaxed">

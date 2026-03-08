@@ -184,3 +184,84 @@
     stroke-dashoffset: 0;
   }
 }
+
+/* ─── Login page: force Clerk form text visible (dark card) ─── */
+.login-page-revamp .cl-root .cl-formButtonPrimary,
+.login-page-revamp .cl-root .cl-socialButtonsBlockButton,
+.login-page-revamp .cl-root .cl-socialButtonsBlockButton span,
+.login-page-revamp .cl-root .cl-socialButtonsBlockButton div {
+  color: #fff !important;
+  font-weight: 600;
+}
+.login-page-revamp .cl-root .cl-footerAction,
+.login-page-revamp .cl-root .cl-footerActionLink {
+  color: #a1a1aa !important;
+}
+.login-page-revamp .cl-root .cl-footerActionLink:hover {
+  color: #34d399 !important;
+}
+.login-page-revamp .cl-root .cl-footerPages,
+.login-page-revamp .cl-root .cl-footerPages a,
+.login-page-revamp .cl-root .cl-formFieldLabel {
+  color: #d4d4d8 !important;
+}
+.login-page-revamp .cl-root .cl-formFieldInput {
+  color: #fff !important;
+}
+.login-page-revamp .cl-root .cl-formFieldInput::placeholder {
+  color: #71717a !important;
+}
+.login-page-revamp .cl-root .cl-badge {
+  color: #fbbf24 !important;
+  font-size: 0.7rem;
+}
+
+/* Login page: Continue with Google — make it look like a real button */
+.login-page .cl-socialButtonsBlockButton {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  padding: 0.75rem 1rem !important;
+  background: #27272a !important;
+  border: 1px solid #52525b !important;
+  border-radius: 0.5rem !important;
+  color: #fff !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s, border-color 0.15s !important;
+}
+.login-page .cl-socialButtonsBlockButton:hover {
+  background: #3f3f46 !important;
+  border-color: #71717a !important;
+}
+.login-page .cl-socialButtonsBlockButton span,
+.login-page .cl-socialButtonsBlockButton div {
+  color: #fff !important;
+}
+
+/* Signup page: same button style as login */
+.signup-page .cl-socialButtonsBlockButton {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  padding: 0.75rem 1rem !important;
+  background: #27272a !important;
+  border: 1px solid #52525b !important;
+  border-radius: 0.5rem !important;
+  color: #fff !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s, border-color 0.15s !important;
+}
+.signup-page .cl-socialButtonsBlockButton:hover {
+  background: #3f3f46 !important;
+  border-color: #71717a !important;
+}
+.signup-page .cl-socialButtonsBlockButton span,
+.signup-page .cl-socialButtonsBlockButton div {
+  color: #fff !important;
+}
