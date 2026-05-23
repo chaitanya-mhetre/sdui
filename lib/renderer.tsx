@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LayoutNode, ComponentDefinition } from '@/types';
 import { getComponentDefinition } from './componentRegistry';
 import { useBuilderStore } from '@/store/builderStore';
@@ -546,6 +546,9 @@ function TextComponent({
   parentId,
   indexInParent,
 }: RendererProps & { componentDef: any }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const editRef = useRef<HTMLSpanElement>(null);
+
   const getProp = (key: string, defaultVal: any) => {
     if (node.props && node.props[key] !== undefined) return node.props[key];
     if ((node as any)[key] !== undefined) return (node as any)[key];
@@ -568,6 +571,45 @@ function TextComponent({
   const isSelected = selectedNodeId === node.id;
   const isHovered = hoverNodeId === node.id && !isSelected;
 
+  // Focus and select all text when entering edit mode
+  useEffect(() => {
+    if (isEditing && editRef.current) {
+      editRef.current.focus();
+      const range = document.createRange();
+      range.selectNodeContents(editRef.current);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    }
+  }, [isEditing]);
+
+  const commit = (newValue: string) => {
+    useBuilderStore.getState().setNodeProp(node.id, 'data', newValue);
+    setIsEditing(false);
+  };
+
+  const cancel = () => {
+    setIsEditing(false);
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    if (!isInteractive) return;
+    e.stopPropagation();
+    setIsEditing(true);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Stop propagation so global Delete handler doesn't fire while typing
+    e.stopPropagation();
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      commit(editRef.current?.textContent ?? '');
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cancel();
+    }
+  };
+
   const overflowStyles: React.CSSProperties =
     maxLines > 0
       ? {
@@ -579,8 +621,21 @@ function TextComponent({
         }
       : {};
 
+  const textStyle: React.CSSProperties = {
+    fontSize: `${fontSize}px`,
+    fontWeight: fontWeight === '600' ? 600 : fontWeight === 'bold' ? 'bold' : 'normal',
+    fontStyle,
+    fontFamily: fontFamily || 'inherit',
+    color,
+    textAlign: textAlign as any,
+    letterSpacing: `${letterSpacing}px`,
+    wordSpacing: `${wordSpacing}px`,
+    lineHeight,
+    ...overflowStyles,
+  };
+
   const dragProps =
-    isInteractive && parentId !== undefined && indexInParent !== undefined
+    isInteractive && !isEditing && parentId !== undefined && indexInParent !== undefined
       ? {
           draggable: true as const,
           onDragStart: (e: React.DragEvent) => startNodeDrag(e, node.id),
@@ -594,26 +649,33 @@ function TextComponent({
     <div
       {...dragProps}
       onClick={(e) => {
+        if (isEditing) { e.stopPropagation(); return; }
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
+      onDoubleClick={handleDoubleClick}
       onMouseEnter={() => onNodeHover?.(node.id)}
       onMouseLeave={() => onNodeHover?.(null)}
-      className={`${isSelected ? 'ring-2 ring-primary ring-offset-1' : isHovered ? 'ring-1 ring-primary/40' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
-      style={{
-        fontSize: `${fontSize}px`,
-        fontWeight: fontWeight === '600' ? 600 : fontWeight === 'bold' ? 'bold' : 'normal',
-        fontStyle,
-        fontFamily: fontFamily || 'inherit',
-        color,
-        textAlign: textAlign as any,
-        letterSpacing: `${letterSpacing}px`,
-        wordSpacing: `${wordSpacing}px`,
-        lineHeight,
-        ...overflowStyles,
-      }}
+      className={`${isSelected ? 'ring-2 ring-primary ring-offset-1' : isHovered ? 'ring-1 ring-primary/40' : ''} ${isInteractive ? (isEditing ? 'cursor-text' : 'cursor-pointer') : ''}`}
     >
-      {text}
+      {isEditing ? (
+        <span
+          ref={editRef}
+          contentEditable
+          suppressContentEditableWarning
+          spellCheck={false}
+          onBlur={(e) => commit(e.currentTarget.textContent ?? '')}
+          onKeyDown={handleKeyDown}
+          style={textStyle}
+          className="outline-none ring-2 ring-primary px-0.5 rounded-sm block"
+        >
+          {text}
+        </span>
+      ) : (
+        <div style={textStyle}>
+          {text}
+        </div>
+      )}
     </div>
   );
 }

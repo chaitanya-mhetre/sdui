@@ -64,6 +64,7 @@ interface BuilderState {
   cutNode: (nodeId: string) => void;
   pasteNode: (parentId?: string) => void;
   setNodeHidden: (nodeId: string, hidden: boolean) => void;
+  setNodeProp: (nodeId: string, key: string, value: unknown) => void;
 
   // Preview and device
   setPreviewMode: (enabled: boolean) => void;
@@ -464,6 +465,17 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       const nextTree = setNodePropInTree(state.rootNode, nodeId, (n) => ({
         ...n,
         props: { ...n.props, __hidden: hidden },
+      }));
+      return { rootNode: nextTree };
+    });
+  },
+
+  setNodeProp: (nodeId: string, key: string, value: unknown) => {
+    set((state) => {
+      if (!state.rootNode) return state;
+      const nextTree = setNodePropInTree(state.rootNode, nodeId, (n) => ({
+        ...n,
+        props: { ...n.props, [key]: value },
       }));
       return { rootNode: nextTree };
     });
