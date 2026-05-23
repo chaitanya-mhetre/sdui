@@ -270,7 +270,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   selectedDevicePreset: 'phone-android',
   sidebarOpen: true,
   propertiesPanelOpen: true,
-  editorViewMode: 'design',
+  editorViewMode: 'code',
   frameColor: '#475569',
   screenBackground: { type: 'solid', color: '#ffffff' },
   platformComponents: [],

@@ -267,20 +267,22 @@ export function Toolbar({ project }: ToolbarProps) {
           <Button
             variant="ghost"
             size="sm"
-            className={`rounded-md gap-2 h-8 ${editorViewMode === 'design' ? 'bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
-            onClick={() => setEditorViewMode('design')}
-          >
-            <LayoutPanelTop className="w-4 h-4" />
-            Design
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
             className={`rounded-md gap-2 h-8 ${editorViewMode === 'code' ? 'bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}`}
             onClick={() => setEditorViewMode('code')}
           >
             <Code2 className="w-4 h-4" />
             Code
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`rounded-md gap-2 h-8 ${editorViewMode === 'design' ? 'bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'} opacity-60`}
+            onClick={() => setEditorViewMode('design')}
+            title="Design view is a work-in-progress; use Code for full control"
+          >
+            <LayoutPanelTop className="w-4 h-4" />
+            Design
+            <span className="ml-0.5 text-[9px] uppercase tracking-wide opacity-70">WIP</span>
           </Button>
         </div>
         <div className="h-6 w-px bg-border" />

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useBuilderStore } from '@/store/builderStore';
 import { PreviewCanvas } from './PreviewCanvas';
 import { layoutToCode, codeToLayout } from '@/lib/layoutCode';
 import { parseLayout } from '@/lib/sdui/layoutParser';
+import { validateSduiJson } from '@/lib/sdui/validation';
 import { apiRequest } from '@/lib/api-client';
 import { FileJson, Plus, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
 import { builderRootToSduiJson } from '@/lib/builderToSdui';
@@ -66,6 +67,17 @@ export function CodeView({
   const { resolvedTheme } = useTheme();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevLayoutIdRef = useRef<string | null | undefined>(activeLayoutId);
+
+  // Validate parsed SDUI JSON for structural warnings (depth, node count, etc.)
+  const validationResult = useMemo(() => {
+    if (!layoutJson?.trim()) return null;
+    try {
+      const parsed = JSON.parse(layoutJson);
+      return validateSduiJson(parsed);
+    } catch {
+      return null;
+    }
+  }, [layoutJson]);
 
   // Helper to detect if JSON is SDUI format (has body/appBar) vs builder format (has children)
   const isSduiFormat = (jsonStr: string): boolean => {
@@ -347,6 +359,27 @@ export function CodeView({
             Preview
           </h3>
         </div>
+
+        {/* Inline error/warning banners */}
+        {parseError && (
+          <div className="mx-3 mt-2 flex items-start gap-1.5 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span><strong>JSON error:</strong> {parseError}</span>
+          </div>
+        )}
+        {!parseError && validationResult && !validationResult.valid && (
+          <div className="mx-3 mt-2 rounded-md bg-yellow-50 dark:bg-yellow-900/20 px-3 py-2 text-xs text-yellow-700 dark:text-yellow-400">
+            <strong>Validation:</strong> {validationResult.error}
+          </div>
+        )}
+        {!parseError && validationResult?.valid && validationResult.warnings.length > 0 && (
+          <div className="mx-3 mt-2 rounded-md bg-yellow-50 dark:bg-yellow-900/20 px-3 py-2 text-xs text-yellow-700 dark:text-yellow-400">
+            <strong>{validationResult.warnings.length} warning{validationResult.warnings.length > 1 ? 's' : ''}:</strong>{' '}
+            {validationResult.warnings.slice(0, 2).join(' · ')}
+            {validationResult.warnings.length > 2 && ` · +${validationResult.warnings.length - 2} more`}
+          </div>
+        )}
+
         <div className="flex-1 flex items-center justify-center min-h-0 p-4 overflow-auto">
           <PreviewCanvas
             rootNode={layoutJson ? null : rootNode}
