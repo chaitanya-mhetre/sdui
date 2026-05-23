@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { LayoutNode, ComponentDefinition } from '@/types';
 import { getComponentDefinition } from './componentRegistry';
 import { validateDrop } from './flutterRules';
 import { useBuilderStore } from '@/store/builderStore';
-import { parsePadding, parseGap, parseGradient, parseBorderRadius, parseColor } from './renderer-utils';
+import { parsePadding, parseGap, parseGradient, parseBorderRadius, parseColor, animationProps } from './renderer-utils';
 
 /** Map SDUI / lowercase / snake_case type names to builder registry ids */
 const SDUI_TYPE_TO_REGISTRY: Record<string, string> = {
@@ -230,6 +231,29 @@ export function LayoutRenderer({
   // right renderer case.
   const renderType = builtInDef?.id ?? normalizedType;
 
+  // CT-G: entry-animation wrapping — check BEFORE switch so every widget type
+  // benefits automatically.
+  const anim = animationProps(node.props?.animation);
+
+  /**
+   * Wrap a rendered widget in a framer-motion div when an animation spec is
+   * present.  className="contents" makes the div layout-transparent so it
+   * doesn't disturb flex/grid containers.
+   */
+  function withAnimation(el: React.ReactElement): React.ReactElement {
+    if (!anim) return el;
+    return (
+      <motion.div
+        initial={anim.initial}
+        animate={anim.animate}
+        transition={anim.transition}
+        className="contents"
+      >
+        {el}
+      </motion.div>
+    );
+  }
+
   switch (renderType) {
     case 'Container':
     case 'VStack':
@@ -245,7 +269,7 @@ export function LayoutRenderer({
     case 'Card':
     case 'ListView':
     case 'GridView':
-      return (
+      return withAnimation(
         <LayoutContainer
           node={node}
           componentDef={componentDef}
@@ -261,7 +285,7 @@ export function LayoutRenderer({
       );
 
     case 'Icon':
-      return (
+      return withAnimation(
         <IconComponent
           node={node}
           componentDef={componentDef}
@@ -276,7 +300,7 @@ export function LayoutRenderer({
       );
 
     case 'Text':
-      return (
+      return withAnimation(
         <TextComponent
           node={node}
           componentDef={componentDef}
@@ -296,7 +320,7 @@ export function LayoutRenderer({
     case 'OutlinedButton':
     case 'IconButton':
     case 'FloatingActionButton':
-      return (
+      return withAnimation(
         <ButtonComponent
           node={node}
           componentDef={componentDef}
@@ -311,7 +335,7 @@ export function LayoutRenderer({
       );
 
     case 'Image':
-      return (
+      return withAnimation(
         <ImageComponent
           node={node}
           componentDef={componentDef}
@@ -327,7 +351,7 @@ export function LayoutRenderer({
 
     case 'TextInput':
     case 'TextField':
-      return (
+      return withAnimation(
         <TextInputComponent
           node={node}
           componentDef={componentDef}
@@ -342,7 +366,7 @@ export function LayoutRenderer({
       );
 
     case 'TextArea':
-      return (
+      return withAnimation(
         <TextAreaComponent
           node={node}
           componentDef={componentDef}
@@ -357,7 +381,7 @@ export function LayoutRenderer({
       );
 
     case 'Divider':
-      return (
+      return withAnimation(
         <DividerComponent
           node={node}
           isInteractive={isInteractive}
@@ -372,7 +396,7 @@ export function LayoutRenderer({
 
     case 'Spacer':
     case 'SizedBox':
-      return (
+      return withAnimation(
         <SpacerComponent
           node={node}
           isInteractive={isInteractive}
@@ -386,7 +410,7 @@ export function LayoutRenderer({
       );
 
     case 'Carousel':
-      return (
+      return withAnimation(
         <CarouselComponent
           node={node}
           isInteractive={isInteractive}
@@ -401,7 +425,7 @@ export function LayoutRenderer({
       );
 
     default:
-      return (
+      return withAnimation(
         <div className="border-2 border-yellow-500 p-2 bg-yellow-50">
           <p className="text-yellow-600 text-sm">Component not yet implemented: {node.componentType}</p>
         </div>

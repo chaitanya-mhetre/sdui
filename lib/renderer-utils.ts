@@ -4,6 +4,83 @@
  * Extracted so renderer.tsx stays lean.
  */
 
+// ---------------------------------------------------------------------------
+// Entry-animation helpers (CT-G)
+// ---------------------------------------------------------------------------
+
+export interface AnimationMotionProps {
+  initial: Record<string, unknown>;
+  animate: Record<string, unknown>;
+  transition: Record<string, unknown>;
+}
+
+/**
+ * Convert an SDUI node animation spec:
+ *   { type, duration, delay, repeat }
+ * into framer-motion initial / animate / transition objects.
+ * Returns null when no valid spec is present — caller skips the wrapper.
+ */
+export function animationProps(spec: unknown): AnimationMotionProps | null {
+  if (!spec || typeof spec !== 'object' || !(spec as any).type) return null;
+  const s = spec as Record<string, unknown>;
+  const duration = (typeof s.duration === 'number' ? s.duration : 600) / 1000;
+  const delay = (typeof s.delay === 'number' ? s.delay : 0) / 1000;
+  const repeat = s.repeat === true;
+  const ease = 'easeOut';
+
+  switch (s.type) {
+    case 'fade_in':
+      return {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        transition: { duration, delay, ease },
+      };
+    case 'fade_slide_up':
+      return {
+        initial: { opacity: 0, y: 24 },
+        animate: { opacity: 1, y: 0 },
+        transition: { duration, delay, ease },
+      };
+    case 'fade_slide_down':
+      return {
+        initial: { opacity: 0, y: -24 },
+        animate: { opacity: 1, y: 0 },
+        transition: { duration, delay, ease },
+      };
+    case 'fade_slide_left':
+      return {
+        initial: { opacity: 0, x: 24 },
+        animate: { opacity: 1, x: 0 },
+        transition: { duration, delay, ease },
+      };
+    case 'fade_slide_right':
+      return {
+        initial: { opacity: 0, x: -24 },
+        animate: { opacity: 1, x: 0 },
+        transition: { duration, delay, ease },
+      };
+    case 'scale_in':
+      return {
+        initial: { opacity: 0, scale: 0.85 },
+        animate: { opacity: 1, scale: 1 },
+        transition: { duration, delay, ease },
+      };
+    case 'pulse':
+      return {
+        initial: { scale: 1 },
+        animate: { scale: [1, 1.05, 1] },
+        transition: {
+          duration,
+          delay,
+          repeat: repeat ? Infinity : 0,
+          ease: 'easeInOut',
+        },
+      };
+    default:
+      return null;
+  }
+}
+
 /**
  * Parse a padding value that may be:
  *  - number          → {padding: N}
