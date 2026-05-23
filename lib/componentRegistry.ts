@@ -611,6 +611,290 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     defaultProps: { label: 'Category', name: 'star', color: '#6366F1', backgroundColor: '#EEF2FF', borderRadius: 12 },
   },
 
+  // ── Stack ────────────────────────────────────────────────────────────────────
+  Stack: {
+    id: 'Stack',
+    name: 'Stack',
+    category: 'layout',
+    icon: 'Layers',
+    description: 'Overlay children on top of each other.',
+    allowChildren: true,
+    children: { mode: 'multi' },
+    properties: [
+      { name: 'alignment', type: 'select', label: 'Alignment', default: 'topLeft', options: ALIGNMENT_OPTIONS, category: 'layout' },
+      { name: 'fit', type: 'select', label: 'Fit', default: 'loose', options: [
+        { label: 'Loose', value: 'loose' },
+        { label: 'Expand', value: 'expand' },
+        { label: 'Passthrough', value: 'passthrough' },
+      ], category: 'layout' },
+      { name: 'clipBehavior', type: 'select', label: 'Clip Behavior', default: 'hardEdge', options: [
+        { label: 'None', value: 'none' },
+        { label: 'Hard Edge', value: 'hardEdge' },
+        { label: 'Anti-alias', value: 'antiAlias' },
+      ], category: 'layout' },
+    ],
+    defaultProps: { alignment: 'topLeft', fit: 'loose', clipBehavior: 'hardEdge' },
+  },
+
+  // ── Positioned ────────────────────────────────────────────────────────────────
+  Positioned: {
+    id: 'Positioned',
+    name: 'Positioned',
+    category: 'layout',
+    icon: 'Move',
+    description: 'Positions a child at specific coordinates inside a Stack.',
+    allowChildren: true,
+    children: { mode: 'single' },
+    properties: [
+      { name: 'top', type: 'number', label: 'Top', default: 0, min: 0, category: 'layout' },
+      { name: 'left', type: 'number', label: 'Left', default: 0, min: 0, category: 'layout' },
+      { name: 'right', type: 'number', label: 'Right', default: 0, min: 0, category: 'layout' },
+      { name: 'bottom', type: 'number', label: 'Bottom', default: 0, min: 0, category: 'layout' },
+      { name: 'width', type: 'number', label: 'Width (0 = auto)', default: 0, min: 0, category: 'layout' },
+      { name: 'height', type: 'number', label: 'Height (0 = auto)', default: 0, min: 0, category: 'layout' },
+    ],
+    defaultProps: { top: 0, left: 0 },
+  },
+
+  // ── Wrap ──────────────────────────────────────────────────────────────────────
+  Wrap: {
+    id: 'Wrap',
+    name: 'Wrap',
+    category: 'layout',
+    icon: 'AlignJustify',
+    description: 'Displays children in a flow that wraps to the next line.',
+    allowChildren: true,
+    children: { mode: 'multi' },
+    properties: [
+      { name: 'direction', type: 'select', label: 'Direction', default: 'horizontal', options: SCROLL_DIRECTION, category: 'layout' },
+      { name: 'alignment', type: 'select', label: 'Alignment', default: 'start', options: MAIN_AXIS_ALIGNMENT, category: 'layout' },
+      { name: 'spacing', type: 'number', label: 'Spacing (main axis)', default: 8, min: 0, max: 200, category: 'layout' },
+      { name: 'runSpacing', type: 'number', label: 'Run Spacing (cross axis)', default: 8, min: 0, max: 200, category: 'layout' },
+    ],
+    defaultProps: { direction: 'horizontal', alignment: 'start', spacing: 8, runSpacing: 8 },
+  },
+
+  // ── SafeArea ──────────────────────────────────────────────────────────────────
+  SafeArea: {
+    id: 'SafeArea',
+    name: 'Safe Area',
+    category: 'layout',
+    icon: 'Smartphone',
+    description: 'Insets a child to avoid OS intrusions (notch, home bar).',
+    allowChildren: true,
+    children: { mode: 'single' },
+    properties: [
+      { name: 'top', type: 'boolean', label: 'Top inset', default: true, category: 'layout' },
+      { name: 'bottom', type: 'boolean', label: 'Bottom inset', default: true, category: 'layout' },
+      { name: 'left', type: 'boolean', label: 'Left inset', default: true, category: 'layout' },
+      { name: 'right', type: 'boolean', label: 'Right inset', default: true, category: 'layout' },
+    ],
+    defaultProps: { top: true, bottom: true, left: true, right: true },
+  },
+
+  // ── CircularProgressIndicator ─────────────────────────────────────────────────
+  CircularProgressIndicator: {
+    id: 'CircularProgressIndicator',
+    name: 'Circular Progress',
+    category: 'display',
+    icon: 'Loader',
+    description: 'Circular spinner for loading / progress states.',
+    allowChildren: false,
+    children: { mode: 'none' },
+    properties: [
+      { name: 'value', type: 'slider', label: 'Value (empty = indeterminate)', default: 0, min: 0, max: 1, step: 0.01, category: 'content' },
+      { name: 'color', type: 'color', label: 'Color', default: '#6366F1', category: 'appearance' },
+      { name: 'strokeWidth', type: 'slider', label: 'Stroke Width', default: 4, min: 1, max: 20, step: 0.5, category: 'appearance' },
+    ],
+    defaultProps: { color: '#6366F1', strokeWidth: 4 },
+  },
+
+  // ── LinearProgressIndicator ───────────────────────────────────────────────────
+  LinearProgressIndicator: {
+    id: 'LinearProgressIndicator',
+    name: 'Linear Progress',
+    category: 'display',
+    icon: 'Loader2',
+    description: 'Horizontal bar for loading / progress states.',
+    allowChildren: false,
+    children: { mode: 'none' },
+    properties: [
+      { name: 'value', type: 'slider', label: 'Value (empty = indeterminate)', default: 0, min: 0, max: 1, step: 0.01, category: 'content' },
+      { name: 'color', type: 'color', label: 'Indicator Color', default: '#6366F1', category: 'appearance' },
+      { name: 'minHeight', type: 'number', label: 'Min Height', default: 4, min: 1, max: 40, category: 'layout' },
+    ],
+    defaultProps: { color: '#6366F1', minHeight: 4 },
+  },
+
+  // ── Checkbox ──────────────────────────────────────────────────────────────────
+  Checkbox: {
+    id: 'Checkbox',
+    name: 'Checkbox',
+    category: 'input',
+    icon: 'SquareCheck',
+    description: 'Boolean checkbox with optional label.',
+    allowChildren: false,
+    children: { mode: 'none' },
+    properties: [
+      { name: 'id', type: 'string', label: 'Field ID', default: 'checkbox', category: 'content' },
+      { name: 'value', type: 'boolean', label: 'Checked', default: false, category: 'content' },
+      { name: 'label', type: 'string', label: 'Label', default: 'Checkbox', category: 'content' },
+      { name: 'activeColor', type: 'color', label: 'Active Color', default: '#6366F1', category: 'appearance' },
+    ],
+    defaultProps: { id: 'checkbox', value: false, label: 'Checkbox', activeColor: '#6366F1' },
+  },
+
+  // ── Switch ────────────────────────────────────────────────────────────────────
+  Switch: {
+    id: 'Switch',
+    name: 'Switch',
+    category: 'input',
+    icon: 'ToggleLeft',
+    description: 'Toggle switch for on/off states.',
+    allowChildren: false,
+    children: { mode: 'none' },
+    properties: [
+      { name: 'id', type: 'string', label: 'Field ID', default: 'switch', category: 'content' },
+      { name: 'value', type: 'boolean', label: 'On', default: false, category: 'content' },
+      { name: 'label', type: 'string', label: 'Label', default: 'Switch', category: 'content' },
+      { name: 'activeColor', type: 'color', label: 'Active Color', default: '#6366F1', category: 'appearance' },
+    ],
+    defaultProps: { id: 'switch', value: false, label: 'Switch', activeColor: '#6366F1' },
+  },
+
+  // ── Slider ────────────────────────────────────────────────────────────────────
+  Slider: {
+    id: 'Slider',
+    name: 'Slider',
+    category: 'input',
+    icon: 'Sliders',
+    description: 'Range slider for numeric input.',
+    allowChildren: false,
+    children: { mode: 'none' },
+    properties: [
+      { name: 'id', type: 'string', label: 'Field ID', default: 'slider', category: 'content' },
+      { name: 'value', type: 'number', label: 'Value', default: 0.5, min: 0, max: 1, step: 0.01, category: 'content' },
+      { name: 'min', type: 'number', label: 'Min', default: 0, category: 'content' },
+      { name: 'max', type: 'number', label: 'Max', default: 1, category: 'content' },
+      { name: 'divisions', type: 'number', label: 'Divisions (0 = continuous)', default: 0, min: 0, max: 100, category: 'behavior' },
+      { name: 'label', type: 'string', label: 'Label (shown on thumb)', default: '', category: 'content' },
+      { name: 'activeColor', type: 'color', label: 'Active Color', default: '#6366F1', category: 'appearance' },
+    ],
+    defaultProps: { id: 'slider', value: 0.5, min: 0, max: 1, activeColor: '#6366F1' },
+  },
+
+  // ── Radio ─────────────────────────────────────────────────────────────────────
+  Radio: {
+    id: 'Radio',
+    name: 'Radio',
+    category: 'input',
+    icon: 'CircleDot',
+    description: 'Single radio button within a named group.',
+    allowChildren: false,
+    children: { mode: 'none' },
+    properties: [
+      { name: 'id', type: 'string', label: 'Field ID', default: 'radio', category: 'content' },
+      { name: 'name', type: 'string', label: 'Group Name', default: 'group', category: 'content' },
+      { name: 'value', type: 'string', label: 'Value', default: 'option1', category: 'content' },
+      { name: 'label', type: 'string', label: 'Label', default: 'Option', category: 'content' },
+      { name: 'activeColor', type: 'color', label: 'Active Color', default: '#6366F1', category: 'appearance' },
+    ],
+    defaultProps: { id: 'radio', name: 'group', value: 'option1', label: 'Option', activeColor: '#6366F1' },
+  },
+
+  // ── Chip ──────────────────────────────────────────────────────────────────────
+  Chip: {
+    id: 'Chip',
+    name: 'Chip',
+    category: 'display',
+    icon: 'Tag',
+    description: 'Compact element for tags, filters, or attributes.',
+    allowChildren: false,
+    children: { mode: 'none' },
+    properties: [
+      { name: 'label', type: 'string', label: 'Label', default: 'Chip', category: 'content' },
+      { name: 'backgroundColor', type: 'color', label: 'Background Color', default: '#E8EAF6', category: 'appearance' },
+      { name: 'labelColor', type: 'color', label: 'Label Color', default: '#3949AB', category: 'appearance' },
+      { name: 'borderRadius', type: 'number', label: 'Border Radius', default: 16, min: 0, max: 50, category: 'appearance' },
+    ],
+    defaultProps: { label: 'Chip', backgroundColor: '#E8EAF6', labelColor: '#3949AB', borderRadius: 16 },
+  },
+
+  // ── Badge ─────────────────────────────────────────────────────────────────────
+  Badge: {
+    id: 'Badge',
+    name: 'Badge',
+    category: 'display',
+    icon: 'Bell',
+    description: 'Small badge overlaid on a child widget (e.g. notification count).',
+    allowChildren: true,
+    children: { mode: 'single' },
+    properties: [
+      { name: 'label', type: 'string', label: 'Label', default: '1', category: 'content' },
+      { name: 'backgroundColor', type: 'color', label: 'Background Color', default: '#EF4444', category: 'appearance' },
+      { name: 'textColor', type: 'color', label: 'Text Color', default: '#FFFFFF', category: 'appearance' },
+    ],
+    defaultProps: { label: '1', backgroundColor: '#EF4444', textColor: '#FFFFFF' },
+  },
+
+  // ── Tooltip ───────────────────────────────────────────────────────────────────
+  Tooltip: {
+    id: 'Tooltip',
+    name: 'Tooltip',
+    category: 'display',
+    icon: 'MessageCircle',
+    description: 'Shows a floating message when a child is long-pressed.',
+    allowChildren: true,
+    children: { mode: 'single' },
+    properties: [
+      { name: 'message', type: 'string', label: 'Message', default: 'Tooltip text', category: 'content' },
+      { name: 'preferBelow', type: 'boolean', label: 'Prefer Below', default: true, category: 'behavior' },
+    ],
+    defaultProps: { message: 'Tooltip text', preferBelow: true },
+  },
+
+  // ── Form ──────────────────────────────────────────────────────────────────────
+  Form: {
+    id: 'Form',
+    name: 'Form',
+    category: 'input',
+    icon: 'ClipboardEdit',
+    description: 'Groups form fields and manages validation state.',
+    allowChildren: true,
+    children: { mode: 'single' },
+    properties: [
+      { name: 'id', type: 'string', label: 'Form ID', default: 'form', category: 'content' },
+    ],
+    defaultProps: { id: 'form' },
+  },
+
+  // ── TextFormField ─────────────────────────────────────────────────────────────
+  TextFormField: {
+    id: 'TextFormField',
+    name: 'Text Form Field',
+    category: 'input',
+    icon: 'PenSquare',
+    description: 'Validated text input for use inside a Form.',
+    allowChildren: false,
+    children: { mode: 'none' },
+    properties: [
+      { name: 'id', type: 'string', label: 'Field ID', default: 'field', category: 'content' },
+      { name: 'label', type: 'string', label: 'Label', default: 'Label', category: 'content' },
+      { name: 'hintText', type: 'string', label: 'Hint Text', default: '', category: 'content' },
+      { name: 'obscureText', type: 'boolean', label: 'Password (hide text)', default: false, category: 'behavior' },
+      { name: 'keyboardType', type: 'select', label: 'Keyboard Type', default: 'text', options: [
+        { label: 'Text', value: 'text' },
+        { label: 'Email', value: 'emailAddress' },
+        { label: 'Number', value: 'number' },
+        { label: 'Phone', value: 'phone' },
+        { label: 'Multiline', value: 'multiline' },
+        { label: 'URL', value: 'url' },
+      ], category: 'behavior' },
+      { name: 'validatorRules', type: 'textarea', label: 'Validator Rules (JSON)', default: '', category: 'behavior' },
+    ],
+    defaultProps: { id: 'field', label: 'Label', obscureText: false, keyboardType: 'text' },
+  },
+
   // ── Legacy / alternate names ──────────────────────────────────────────────────
   // HStack → alias for Row
   HStack: {
@@ -777,6 +1061,29 @@ function normalizeKey(type: string): string {
     textinput: 'TextInput',
     textarea: 'TextArea',
     navigation: 'Navigation',
+    // PG4 SDK widgets
+    stack: 'Stack',
+    positioned: 'Positioned',
+    wrap: 'Wrap',
+    safe_area: 'SafeArea',
+    safearea: 'SafeArea',
+    circular_progress_indicator: 'CircularProgressIndicator',
+    circularprogress: 'CircularProgressIndicator',
+    circularprogressindicator: 'CircularProgressIndicator',
+    linear_progress_indicator: 'LinearProgressIndicator',
+    linearprogress: 'LinearProgressIndicator',
+    linearprogressindicator: 'LinearProgressIndicator',
+    checkbox: 'Checkbox',
+    switch: 'Switch',
+    switch_: 'Switch',
+    slider: 'Slider',
+    radio: 'Radio',
+    chip: 'Chip',
+    badge: 'Badge',
+    tooltip: 'Tooltip',
+    form: 'Form',
+    text_form_field: 'TextFormField',
+    textformfield: 'TextFormField',
   };
 
   const lower = type.toLowerCase();
