@@ -27,6 +27,7 @@ interface RendererProps {
   onNodeClick?: (nodeId: string) => void;
   selectedNodeId?: string | null;
   hoverNodeId?: string | null;
+  onNodeHover?: (id: string | null) => void;
   platformComponents?: ComponentDefinition[];
 }
 
@@ -39,6 +40,7 @@ export function LayoutRenderer({
   onNodeClick,
   selectedNodeId,
   hoverNodeId,
+  onNodeHover,
   platformComponents = [],
 }: RendererProps) {
   const normalizedType = normalizeComponentType(node.componentType);
@@ -83,6 +85,8 @@ export function LayoutRenderer({
         isInteractive={isInteractive}
         onNodeClick={onNodeClick}
         selectedNodeId={selectedNodeId}
+        hoverNodeId={hoverNodeId}
+        onNodeHover={onNodeHover}
         platformComponents={platformComponents}
       />
     );
@@ -115,6 +119,8 @@ export function LayoutRenderer({
           isInteractive={isInteractive}
           onNodeClick={onNodeClick}
           selectedNodeId={selectedNodeId}
+          hoverNodeId={hoverNodeId}
+          onNodeHover={onNodeHover}
           platformComponents={platformComponents}
         />
       );
@@ -127,6 +133,8 @@ export function LayoutRenderer({
           isInteractive={isInteractive}
           onNodeClick={onNodeClick}
           selectedNodeId={selectedNodeId}
+          hoverNodeId={hoverNodeId}
+          onNodeHover={onNodeHover}
         />
       );
 
@@ -138,6 +146,8 @@ export function LayoutRenderer({
           isInteractive={isInteractive}
           onNodeClick={onNodeClick}
           selectedNodeId={selectedNodeId}
+          hoverNodeId={hoverNodeId}
+          onNodeHover={onNodeHover}
         />
       );
 
@@ -154,6 +164,8 @@ export function LayoutRenderer({
           isInteractive={isInteractive}
           onNodeClick={onNodeClick}
           selectedNodeId={selectedNodeId}
+          hoverNodeId={hoverNodeId}
+          onNodeHover={onNodeHover}
         />
       );
 
@@ -165,6 +177,8 @@ export function LayoutRenderer({
           isInteractive={isInteractive}
           onNodeClick={onNodeClick}
           selectedNodeId={selectedNodeId}
+          hoverNodeId={hoverNodeId}
+          onNodeHover={onNodeHover}
         />
       );
 
@@ -177,6 +191,8 @@ export function LayoutRenderer({
           isInteractive={isInteractive}
           onNodeClick={onNodeClick}
           selectedNodeId={selectedNodeId}
+          hoverNodeId={hoverNodeId}
+          onNodeHover={onNodeHover}
         />
       );
 
@@ -188,6 +204,8 @@ export function LayoutRenderer({
           isInteractive={isInteractive}
           onNodeClick={onNodeClick}
           selectedNodeId={selectedNodeId}
+          hoverNodeId={hoverNodeId}
+          onNodeHover={onNodeHover}
         />
       );
 
@@ -198,6 +216,8 @@ export function LayoutRenderer({
           isInteractive={isInteractive}
           onNodeClick={onNodeClick}
           selectedNodeId={selectedNodeId}
+          hoverNodeId={hoverNodeId}
+          onNodeHover={onNodeHover}
         />
       );
 
@@ -209,6 +229,8 @@ export function LayoutRenderer({
           isInteractive={isInteractive}
           onNodeClick={onNodeClick}
           selectedNodeId={selectedNodeId}
+          hoverNodeId={hoverNodeId}
+          onNodeHover={onNodeHover}
         />
       );
 
@@ -228,6 +250,8 @@ function PlatformComponentBlock({
   isInteractive,
   onNodeClick,
   selectedNodeId,
+  hoverNodeId,
+  onNodeHover,
   platformComponents,
 }: RendererProps & { componentDef: ComponentDefinition; platformComponents: ComponentDefinition[] }) {
   const padding = (node.props.padding as string) || '0';
@@ -237,6 +261,7 @@ function PlatformComponentBlock({
   const width = (node.props.width as string) || '100%';
   const height = (node.props.height as string) || 'auto';
   const isSelected = selectedNodeId === node.id;
+  const isHovered = hoverNodeId === node.id && !isSelected;
   const paddingClass = getPaddingClass(padding);
   const gapClass = getGapClass(gap);
   const radiusClass = getBorderRadiusClass(borderRadius);
@@ -247,8 +272,10 @@ function PlatformComponentBlock({
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
+      onMouseEnter={() => onNodeHover?.(node.id)}
+      onMouseLeave={() => onNodeHover?.(null)}
       title={componentDef.name}
-      className={`flex flex-col ${paddingClass} ${gapClass} ${radiusClass} ${isSelected ? 'ring-2 ring-primary' : ''}`}
+      className={`flex flex-col ${paddingClass} ${gapClass} ${radiusClass} ${isSelected ? 'ring-2 ring-primary' : isHovered ? 'ring-1 ring-primary/40' : ''}`}
       style={{ backgroundColor, width, height }}
     >
       <span className="text-xs text-muted-foreground mb-1">[{componentDef.name}]</span>
@@ -259,6 +286,8 @@ function PlatformComponentBlock({
           isInteractive={isInteractive}
           onNodeClick={onNodeClick}
           selectedNodeId={selectedNodeId}
+          hoverNodeId={hoverNodeId}
+          onNodeHover={onNodeHover}
           platformComponents={platformComponents}
         />
       ))}
@@ -273,6 +302,8 @@ function LayoutContainer({
   isInteractive,
   onNodeClick,
   selectedNodeId,
+  hoverNodeId,
+  onNodeHover,
   platformComponents = [],
 }: RendererProps & { componentDef: any }) {
   const direction = (node.props.direction as string) || 'column';
@@ -284,6 +315,7 @@ function LayoutContainer({
   const height = (node.props.height as string) || 'auto';
 
   const isSelected = selectedNodeId === node.id;
+  const isHovered = hoverNodeId === node.id && !isSelected;
 
   const flexDirection = direction === 'row' ? 'flex-row' : 'flex-col';
   const paddingClass = getPaddingClass(padding);
@@ -296,7 +328,9 @@ function LayoutContainer({
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
-      className={`flex ${flexDirection} ${paddingClass} ${gapClass} ${radiusClass} ${isSelected ? 'ring-2 ring-primary' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
+      onMouseEnter={() => onNodeHover?.(node.id)}
+      onMouseLeave={() => onNodeHover?.(null)}
+      className={`flex ${flexDirection} ${paddingClass} ${gapClass} ${radiusClass} ${isSelected ? 'ring-2 ring-primary' : isHovered ? 'ring-1 ring-primary/40' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
       style={{
         backgroundColor,
         width,
@@ -310,6 +344,8 @@ function LayoutContainer({
           isInteractive={isInteractive}
           onNodeClick={onNodeClick}
           selectedNodeId={selectedNodeId}
+          hoverNodeId={hoverNodeId}
+          onNodeHover={onNodeHover}
           platformComponents={platformComponents}
         />
       ))}
@@ -324,6 +360,8 @@ function TextComponent({
   isInteractive,
   onNodeClick,
   selectedNodeId,
+  hoverNodeId,
+  onNodeHover,
 }: RendererProps & { componentDef: any }) {
   const getProp = (key: string, defaultVal: any) => {
     if (node.props && node.props[key] !== undefined) return node.props[key];
@@ -345,6 +383,7 @@ function TextComponent({
   const overflow = getProp('overflow', 'clip');
 
   const isSelected = selectedNodeId === node.id;
+  const isHovered = hoverNodeId === node.id && !isSelected;
 
   const overflowStyles: React.CSSProperties =
     maxLines > 0
@@ -363,7 +402,9 @@ function TextComponent({
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
-      className={`${isSelected ? 'ring-2 ring-primary ring-offset-1' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
+      onMouseEnter={() => onNodeHover?.(node.id)}
+      onMouseLeave={() => onNodeHover?.(null)}
+      className={`${isSelected ? 'ring-2 ring-primary ring-offset-1' : isHovered ? 'ring-1 ring-primary/40' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
       style={{
         fontSize: `${fontSize}px`,
         fontWeight: fontWeight === '600' ? 600 : fontWeight === 'bold' ? 'bold' : 'normal',
@@ -388,11 +429,14 @@ function IconComponent({
   isInteractive,
   onNodeClick,
   selectedNodeId,
+  hoverNodeId,
+  onNodeHover,
 }: RendererProps & { componentDef: any }) {
   const name = (node.props.name as string) || (node.props.icon as string) || 'search';
   const size = (node.props.size as number) || 24;
   const color = (node.props.color as string) || '#000000';
   const isSelected = selectedNodeId === node.id;
+  const isHovered = hoverNodeId === node.id && !isSelected;
 
   return (
     <div
@@ -400,7 +444,9 @@ function IconComponent({
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
-      className={`inline-flex items-center justify-center ${isSelected ? 'ring-2 ring-primary' : ''}`}
+      onMouseEnter={() => onNodeHover?.(node.id)}
+      onMouseLeave={() => onNodeHover?.(null)}
+      className={`inline-flex items-center justify-center ${isSelected ? 'ring-2 ring-primary' : isHovered ? 'ring-1 ring-primary/40' : ''}`}
       style={{ width: size, height: size, color }}
       title={name}
     >
@@ -417,6 +463,8 @@ function ImageComponent({
   isInteractive,
   onNodeClick,
   selectedNodeId,
+  hoverNodeId,
+  onNodeHover,
 }: RendererProps & { componentDef: any }) {
   const src = (node.props.src as string) || '';
   const alt = (node.props.alt as string) || 'Image';
@@ -425,6 +473,7 @@ function ImageComponent({
   const objectFit = (node.props.objectFit as string) || 'cover';
 
   const isSelected = selectedNodeId === node.id;
+  const isHovered = hoverNodeId === node.id && !isSelected;
 
   return (
     <div
@@ -432,7 +481,9 @@ function ImageComponent({
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
-      className={`${isSelected ? 'ring-2 ring-primary' : ''}`}
+      onMouseEnter={() => onNodeHover?.(node.id)}
+      onMouseLeave={() => onNodeHover?.(null)}
+      className={`${isSelected ? 'ring-2 ring-primary' : isHovered ? 'ring-1 ring-primary/40' : ''}`}
       style={{ width, height, overflow: 'hidden' }}
     >
       {src ? (
@@ -461,6 +512,8 @@ function ButtonComponent({
   isInteractive,
   onNodeClick,
   selectedNodeId,
+  hoverNodeId,
+  onNodeHover,
 }: RendererProps & { componentDef: any }) {
   const getProp = (key: string, defaultVal: any) => {
     if (node.props && node.props[key] !== undefined) return node.props[key];
@@ -485,6 +538,7 @@ function ButtonComponent({
   const disabled = getProp('disabled', false) === true || getProp('disabled', false) === 'true';
 
   const isSelected = selectedNodeId === node.id;
+  const isHovered = hoverNodeId === node.id && !isSelected;
 
   // Approximate Material Elevation shadows mapping
   const elevationShadows = [
@@ -505,8 +559,10 @@ function ButtonComponent({
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
+      onMouseEnter={() => onNodeHover?.(node.id)}
+      onMouseLeave={() => onNodeHover?.(null)}
       disabled={disabled || !isInteractive}
-      className={`transition-all ${isSelected ? 'ring-2 ring-primary ring-offset-2' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}
+      className={`transition-all ${isSelected ? 'ring-2 ring-primary ring-offset-2' : isHovered ? 'ring-1 ring-primary/40' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}
       style={{
         backgroundColor,
         color,
@@ -537,6 +593,8 @@ function TextInputComponent({
   isInteractive,
   onNodeClick,
   selectedNodeId,
+  hoverNodeId,
+  onNodeHover,
 }: RendererProps & { componentDef: any }) {
   const placeholder = (node.props.placeholder as string) || 'Enter text...';
   const label = (node.props.label as string) || '';
@@ -545,6 +603,7 @@ function TextInputComponent({
   const width = (node.props.width as string) || '100%';
 
   const isSelected = selectedNodeId === node.id;
+  const isHovered = hoverNodeId === node.id && !isSelected;
 
   return (
     <div
@@ -552,8 +611,10 @@ function TextInputComponent({
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
+      onMouseEnter={() => onNodeHover?.(node.id)}
+      onMouseLeave={() => onNodeHover?.(null)}
       style={{ width }}
-      className={isSelected ? 'ring-2 ring-primary rounded' : ''}
+      className={isSelected ? 'ring-2 ring-primary rounded' : isHovered ? 'ring-1 ring-primary/40 rounded' : ''}
     >
       {label && (
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -578,6 +639,8 @@ function TextAreaComponent({
   isInteractive,
   onNodeClick,
   selectedNodeId,
+  hoverNodeId,
+  onNodeHover,
 }: RendererProps & { componentDef: any }) {
   const placeholder = (node.props.placeholder as string) || 'Enter text...';
   const label = (node.props.label as string) || '';
@@ -586,6 +649,7 @@ function TextAreaComponent({
   const width = (node.props.width as string) || '100%';
 
   const isSelected = selectedNodeId === node.id;
+  const isHovered = hoverNodeId === node.id && !isSelected;
 
   return (
     <div
@@ -593,8 +657,10 @@ function TextAreaComponent({
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
+      onMouseEnter={() => onNodeHover?.(node.id)}
+      onMouseLeave={() => onNodeHover?.(null)}
       style={{ width }}
-      className={isSelected ? 'ring-2 ring-primary rounded' : ''}
+      className={isSelected ? 'ring-2 ring-primary rounded' : isHovered ? 'ring-1 ring-primary/40 rounded' : ''}
     >
       {label && (
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -617,6 +683,8 @@ function DividerComponent({
   isInteractive,
   onNodeClick,
   selectedNodeId,
+  hoverNodeId,
+  onNodeHover,
 }: RendererProps) {
   const getProp = (key: string, defaultVal: any) =>
     node.props && node.props[key] !== undefined ? node.props[key] : defaultVal;
@@ -625,13 +693,16 @@ function DividerComponent({
   const indent = Number(getProp('indent', 0)) || 0;
   const endIndent = Number(getProp('endIndent', 0)) || 0;
   const isSelected = selectedNodeId === node.id;
+  const isHovered = hoverNodeId === node.id && !isSelected;
   return (
     <div
       onClick={(e) => {
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
-      className={`w-full ${isSelected ? 'ring-2 ring-primary rounded' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
+      onMouseEnter={() => onNodeHover?.(node.id)}
+      onMouseLeave={() => onNodeHover?.(null)}
+      className={`w-full ${isSelected ? 'ring-2 ring-primary rounded' : isHovered ? 'ring-1 ring-primary/40 rounded' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
       style={{ marginLeft: indent, marginRight: endIndent, paddingTop: 4, paddingBottom: 4 }}
     >
       <div style={{ height: thickness, backgroundColor: color, width: '100%' }} />
@@ -644,6 +715,8 @@ function SpacerComponent({
   isInteractive,
   onNodeClick,
   selectedNodeId,
+  hoverNodeId,
+  onNodeHover,
 }: RendererProps) {
   const getProp = (key: string, defaultVal: any) =>
     node.props && node.props[key] !== undefined ? node.props[key] : defaultVal;
@@ -651,6 +724,7 @@ function SpacerComponent({
   const height = Number(getProp('height', 0)) || 0;
   const flex = Number(getProp('flex', 0)) || 0;
   const isSelected = selectedNodeId === node.id;
+  const isHovered = hoverNodeId === node.id && !isSelected;
   // Spacer (flex > 0) takes up flex space; SizedBox uses width/height
   const style: React.CSSProperties = flex > 0
     ? { flex: flex }
@@ -661,7 +735,9 @@ function SpacerComponent({
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
-      className={`${isSelected ? 'ring-2 ring-primary' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
+      onMouseEnter={() => onNodeHover?.(node.id)}
+      onMouseLeave={() => onNodeHover?.(null)}
+      className={`${isSelected ? 'ring-2 ring-primary' : isHovered ? 'ring-1 ring-primary/40' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
       style={style}
       title={node.componentType}
     />

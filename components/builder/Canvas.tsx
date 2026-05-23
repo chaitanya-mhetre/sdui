@@ -25,7 +25,10 @@ export function Canvas() {
   const draggedComponentType = useBuilderStore((state) => state.draggedComponentType);
   const dropZoneNodeId = useBuilderStore((state) => state.dropZoneNodeId);
 
+  const hoverNodeId = useBuilderStore((state) => state.hoverNodeId);
+
   const selectNode = useBuilderStore((state) => state.selectNode);
+  const setHoverNodeId = useBuilderStore((state) => state.setHoverNodeId);
   const addChildNode = useBuilderStore((state) => state.addChildNode);
   const setDropZoneNodeId = useBuilderStore((state) => state.setDropZoneNodeId);
   const platformComponents = useBuilderStore((state) => state.platformComponents);
@@ -204,6 +207,8 @@ export function Canvas() {
                 isInteractive={true}
                 onNodeClick={handleNodeClick}
                 selectedNodeId={selectedNodeId}
+                hoverNodeId={hoverNodeId}
+                onNodeHover={setHoverNodeId}
                 platformComponents={platformComponents}
               />
             </DeviceFrame>

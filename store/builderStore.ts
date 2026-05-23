@@ -75,6 +75,10 @@ interface BuilderState {
   redo: () => void;
   clearHistory: () => void;
 
+  // Hover state
+  hoverNodeId: string | null;
+  setHoverNodeId: (id: string | null) => void;
+
   // Multi-selection
   addToSelection: (nodeId: string) => void;
   removeFromSelection: (nodeId: string) => void;
@@ -262,6 +266,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   isDraggingFromLibrary: false,
   draggedComponentType: null,
   dropZoneNodeId: null,
+  hoverNodeId: null,
 
   // Layout actions
   setCurrentLayout: (layout: Layout) => {
@@ -498,6 +503,10 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
 
   setDropZoneNodeId: (nodeId: string | null) => {
     set({ dropZoneNodeId: nodeId });
+  },
+
+  setHoverNodeId: (id: string | null) => {
+    set({ hoverNodeId: id });
   },
 
   // History management
