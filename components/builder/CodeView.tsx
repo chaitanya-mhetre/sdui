@@ -8,7 +8,8 @@ import { layoutToCode, codeToLayout } from '@/lib/layoutCode';
 import { parseLayout } from '@/lib/sdui/layoutParser';
 import { validateSduiJson } from '@/lib/sdui/validation';
 import { apiRequest } from '@/lib/api-client';
-import { FileJson, Plus, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
+import { FileJson, Plus, CheckCircle2, Circle, AlertCircle, Save, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { builderRootToSduiJson } from '@/lib/builderToSdui';
 import { useTheme } from 'next-themes';
 
@@ -64,6 +65,9 @@ export function CodeView({
   const [layoutJson, setLayoutJson] = useState<string>('');
   const [addingScreen, setAddingScreen] = useState(false);
   const [newScreenName, setNewScreenName] = useState('');
+  const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const savedCodeRef = useRef<string>('');
   const { resolvedTheme } = useTheme();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevLayoutIdRef = useRef<string | null | undefined>(activeLayoutId);
@@ -95,7 +99,7 @@ export function CodeView({
   useEffect(() => {
     if (prevLayoutIdRef.current !== activeLayoutId || code === '') {
       prevLayoutIdRef.current = activeLayoutId;
-      
+
       if (rootNode) {
         // Design view is the source of truth for the session.
         // Convert the LIVE layout tree immediately to SDUI format.
@@ -106,23 +110,66 @@ export function CodeView({
           setCode(sduiCode);
           setLayoutJson(sduiCode);
           setParseError(null);
+          savedCodeRef.current = sduiCode;
+          setIsDirty(false);
         } catch (e) {
           console.error("Failed to convert rootNode to SDUI JSON", e);
           // Fallback if conversion fails
-          setCode(layoutToCode(rootNode));
+          const fallback = layoutToCode(rootNode);
+          setCode(fallback);
           setLayoutJson('');
           setParseError(null);
+          savedCodeRef.current = fallback;
+          setIsDirty(false);
         }
       } else {
         setCode('');
         setLayoutJson('');
+        savedCodeRef.current = '';
+        setIsDirty(false);
       }
     }
   }, [activeLayoutId, rootNode, code]);
 
+  const persistSduiJson = async (v: string) => {
+    if (!currentLayout?.id) return;
+    try {
+      const sduiJson = JSON.parse(v);
+      await apiRequest(`/layouts/${currentLayout.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ sduiJson }),
+      });
+      if (currentLayout) {
+        const updatedLayout = { ...currentLayout, sduiJson };
+        useBuilderStore.getState().setCurrentLayout(updatedLayout);
+      }
+      savedCodeRef.current = v;
+      setIsDirty(false);
+    } catch (err) {
+      console.error('Failed to save sduiJson:', err);
+    }
+  };
+
+  const handleSave = async () => {
+    const v = code;
+    if (!v.trim() || !currentLayout?.id) return;
+    setIsSaving(true);
+    try {
+      if (isSduiFormat(v)) {
+        const result = parseLayout(v);
+        if (result.success) {
+          await persistSduiJson(v);
+        }
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleCodeChange = (value: string | undefined) => {
     const v = value ?? '';
     setCode(v);
+    setIsDirty(v !== savedCodeRef.current);
     try {
       if (v.trim()) {
         JSON.parse(v);
@@ -134,7 +181,7 @@ export function CodeView({
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       debounceRef.current = null;
-      
+
       if (!v.trim()) {
         setLayoutJson('');
         return;
@@ -147,24 +194,8 @@ export function CodeView({
         if (result.success) {
           setLayoutJson(v);
           setParseError(null);
-          // Auto-save sduiJson to layout and update store
-          if (currentLayout?.id) {
-            const sduiJson = JSON.parse(v);
-            apiRequest(`/layouts/${currentLayout.id}`, {
-              method: 'PATCH',
-              body: JSON.stringify({ sduiJson }),
-            })
-              .then(() => {
-                // Update store with new sduiJson
-                if (currentLayout) {
-                  const updatedLayout = { ...currentLayout, sduiJson };
-                  useBuilderStore.getState().setCurrentLayout(updatedLayout);
-                }
-              })
-              .catch((err) => {
-                console.error('Failed to auto-save sduiJson:', err);
-              });
-          }
+          // Auto-save sduiJson to layout and update store (debounced background save)
+          void persistSduiJson(v);
         } else {
           setParseError(result.error);
           setLayoutJson('');
@@ -312,10 +343,17 @@ export function CodeView({
 
       {/* Center — Monaco JSON editor */}
       <div className="flex-1 flex flex-col min-w-0 border-r border-border">
-        <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
-          <span className="text-sm font-medium text-muted-foreground">
-            {currentLayout?.name || 'Screen'}.json
-          </span>
+        <div className="flex items-center justify-between px-3 py-1.5 border-b border-border bg-card">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium">{currentLayout?.name || 'Screen'}.json</span>
+            {isDirty && (
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-yellow-500"
+                title="Unsaved changes"
+              />
+            )}
+            {!isDirty && <Check className="w-3 h-3 text-green-500" />}
+          </div>
           <div className="flex items-center gap-2">
             {parseError && (
               <span className="flex items-center gap-1 text-xs text-destructive">
@@ -324,6 +362,17 @@ export function CodeView({
               </span>
             )}
             <span className="text-xs text-muted-foreground">SDUI · Flutter-compatible</span>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              onClick={handleSave}
+              disabled={!isDirty || isSaving || !!parseError}
+              title="Save (Cmd+S)"
+            >
+              <Save className="w-3 h-3 mr-1" />
+              {isSaving ? 'Saving…' : 'Save'}
+            </Button>
           </div>
         </div>
 
@@ -334,12 +383,30 @@ export function CodeView({
             value={code}
             onChange={handleCodeChange}
             theme={resolvedTheme === 'dark' ? 'vs-dark' : 'light'}
+            onMount={(editor, monaco) => {
+              // Strict JSON validation — no comments, no extra schemas
+              monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+                validate: true,
+                allowComments: false,
+                schemas: [],
+                enableSchemaRequest: false,
+              });
+              // Cmd+S / Ctrl+S: format then save
+              editor.addCommand(
+                monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
+                () => {
+                  editor.getAction('editor.action.formatDocument')?.run();
+                  void handleSave();
+                }
+              );
+              editor.focus();
+            }}
             options={{
               minimap: { enabled: false },
               fontSize: 13,
               lineNumbers: 'on',
               scrollBeyondLastLine: false,
-              wordWrap: 'on',
+              wordWrap: 'off',
               formatOnPaste: true,
               formatOnType: false,
               tabSize: 2,
@@ -347,9 +414,19 @@ export function CodeView({
               padding: { top: 12, bottom: 12 },
               folding: true,
               bracketPairColorization: { enabled: true },
+              glyphMargin: true,
+              renderWhitespace: 'none',
+              suggest: { showWords: false },
             }}
           />
         </div>
+
+        {parseError && (
+          <div className="bg-destructive/10 border-t border-destructive/40 text-destructive text-xs px-3 py-1.5 flex items-start gap-2 shrink-0">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span>{parseError}</span>
+          </div>
+        )}
       </div>
 
       {/* Right — Live device preview */}
