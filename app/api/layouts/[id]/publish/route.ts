@@ -22,6 +22,7 @@ const publishSchema = z.object({
     .optional(),
   sduiJson: z.record(z.unknown()).optional(),
   rootNode: z.record(z.unknown()).optional(), // Builder tree; converted to SDUI on server
+  layoutKind: z.enum(['full', 'embed']).optional(),
 });
 
 async function publishLayout(request: AuthenticatedRequest) {
@@ -38,6 +39,8 @@ async function publishLayout(request: AuthenticatedRequest) {
     if (!parsed.success) {
       return errorResponse('Invalid request body: ' + parsed.error.message, 400);
     }
+
+    const layoutKind: 'full' | 'embed' = parsed.data.layoutKind === 'embed' ? 'embed' : 'full';
 
     // Fetch layout with project ownership check
     const layout = await prisma.layout.findUnique({
@@ -127,7 +130,7 @@ async function publishLayout(request: AuthenticatedRequest) {
       sample: JSON.stringify(sduiJsonRaw).substring(0, 500),
     });
     
-    const validation = validateSduiJson(sduiJsonRaw);
+    const validation = validateSduiJson(sduiJsonRaw, { layoutKind });
     if (!validation.valid) {
       console.error('[Publish] Validation failed:', validation.error, {
         nodeCount: validation.nodeCount,
@@ -162,6 +165,7 @@ async function publishLayout(request: AuthenticatedRequest) {
         publishedAt,
         publishedBy: request.user?.id,
         isActive: true,
+        layoutKind,
       },
     });
 

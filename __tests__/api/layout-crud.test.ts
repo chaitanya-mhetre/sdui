@@ -7,6 +7,10 @@ const mockPrisma = vi.hoisted(() => ({
     update: vi.fn(),
     delete: vi.fn(),
   },
+  layoutVersion: {
+    create: vi.fn(),
+    updateMany: vi.fn(),
+  },
 }));
 
 vi.mock('@/lib/env', () => ({ env: {} }));
@@ -14,7 +18,12 @@ vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn().mockResolvedValue({ userI
 vi.mock('@/lib/clerk-auth', () => ({ getClerkUser: vi.fn() }));
 vi.mock('@/lib/db', () => ({ prisma: mockPrisma, Prisma: {} }));
 vi.mock('@/lib/sdui/validation', () => ({
-  validateSduiJson: vi.fn(() => ({ valid: true })),
+  validateSduiJson: vi.fn(() => ({ valid: true, warnings: [], nodeCount: 1, unknownTypes: [] })),
+}));
+
+const mockBuilderRootToSduiJson = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/builderToSdui', () => ({
+  builderRootToSduiJson: mockBuilderRootToSduiJson,
 }));
 
 const mockGetUserByApiKey = vi.hoisted(() => vi.fn());
@@ -27,6 +36,7 @@ vi.mock('@/lib/auth', () => ({
 }));
 
 import { PATCH, DELETE } from '@/app/api/layouts/[id]/route';
+import { POST as publishPOST } from '@/app/api/layouts/[id]/publish/route';
 
 const ownerUser = { id: 'owner-user', email: 'owner@example.com', name: null, role: 'USER', plan: 'FREE', status: 'ACTIVE' };
 const attackerUser = { id: 'attacker-user', email: 'attacker@example.com', name: null, role: 'USER', plan: 'FREE', status: 'ACTIVE' };
@@ -101,6 +111,98 @@ describe('Layout ownership checks', () => {
     });
 
     const response = await PATCH(req);
+    expect(response.status).toBe(422);
+  });
+});
+
+const publishLayout = {
+  id: 'layout-1',
+  name: 'Test Layout',
+  screenName: 'test_layout',
+  projectId: 'proj-1',
+  version: 1,
+  sduiJson: { type: 'container', props: {} },
+  project: { userId: 'owner-user' },
+};
+
+describe('publish — layoutKind', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockIsUserActive.mockReturnValue(true);
+    mockPrisma.layoutVersion.updateMany.mockResolvedValue({ count: 0 });
+  });
+
+  it('publishes layoutKind=embed with container root (200)', async () => {
+    const containerSduiJson = { type: 'container', props: {} };
+    mockPrisma.layout.findUnique.mockResolvedValue({
+      ...publishLayout,
+      sduiJson: containerSduiJson,
+    });
+    mockPrisma.layout.update.mockResolvedValue({
+      ...publishLayout,
+      version: 2,
+      isPublished: true,
+      publishedAt: new Date(),
+    });
+    const createdVersion = {
+      id: 'ver-1',
+      version: 2,
+      isActive: true,
+      layoutKind: 'embed',
+    };
+    mockPrisma.layoutVersion.create.mockResolvedValue(createdVersion);
+
+    const { validateSduiJson } = await import('@/lib/sdui/validation');
+    vi.mocked(validateSduiJson).mockReturnValue({
+      valid: true,
+      warnings: [],
+      nodeCount: 1,
+      unknownTypes: [],
+    });
+
+    mockGetUserByApiKey.mockResolvedValue(ownerUser);
+
+    const req = new NextRequest('http://localhost/api/layouts/layout-1/publish', {
+      method: 'POST',
+      headers: { authorization: 'Bearer owner-key', 'content-type': 'application/json' },
+      body: JSON.stringify({ layoutKind: 'embed' }),
+    });
+
+    const response = await publishPOST(req);
+    expect(response.status).toBe(200);
+
+    expect(mockPrisma.layoutVersion.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ layoutKind: 'embed' }),
+      })
+    );
+  });
+
+  it('rejects layoutKind=embed with scaffold root (422)', async () => {
+    const scaffoldSduiJson = { type: 'scaffold', props: {} };
+    mockPrisma.layout.findUnique.mockResolvedValue({
+      ...publishLayout,
+      sduiJson: scaffoldSduiJson,
+    });
+
+    const { validateSduiJson } = await import('@/lib/sdui/validation');
+    vi.mocked(validateSduiJson).mockReturnValue({
+      valid: false,
+      error: '"scaffold" is only valid as a full-screen root, not in an embed layout.',
+      warnings: [],
+      nodeCount: 1,
+      unknownTypes: [],
+    });
+
+    mockGetUserByApiKey.mockResolvedValue(ownerUser);
+
+    const req = new NextRequest('http://localhost/api/layouts/layout-1/publish', {
+      method: 'POST',
+      headers: { authorization: 'Bearer owner-key', 'content-type': 'application/json' },
+      body: JSON.stringify({ layoutKind: 'embed' }),
+    });
+
+    const response = await publishPOST(req);
     expect(response.status).toBe(422);
   });
 });
