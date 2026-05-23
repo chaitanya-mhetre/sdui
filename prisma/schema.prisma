@@ -216,6 +216,7 @@ model PlatformComponent {
   category    ComponentCategory
   propsSchema Json                // PropertySchema[] as JSON
   defaultProps Json               // Record<string, unknown> as JSON
+  childMode   String              @default("multi") // "none" | "single" | "multi" | "slots"
   version     String              @default("1.0.0")
   visibility  ComponentVisibility @default(PUBLIC)
   usageCount  Int                 @default(0)

@@ -465,6 +465,7 @@ async function seedFlutterComponents() {
           category: 'media',
           propsSchema: carouselPropsSchema as any,
           defaultProps: carouselDefaultProps as any,
+          childMode: 'multi',
           version: '1.0.0',
           visibility: 'PUBLIC',
         },
@@ -482,6 +483,7 @@ async function seedFlutterComponents() {
           category: 'navigation',
           propsSchema: appBarPropsSchema as any,
           defaultProps: appBarDefaultProps as any,
+          childMode: 'slots',
           version: '1.0.0',
           visibility: 'PUBLIC',
         },
@@ -499,6 +501,7 @@ async function seedFlutterComponents() {
           category: 'input',
           propsSchema: buttonPropsSchema as any,
           defaultProps: buttonDefaultProps as any,
+          childMode: 'single',
           version: '1.0.0',
           visibility: 'PUBLIC',
         },
@@ -511,6 +514,7 @@ async function seedFlutterComponents() {
         data: {
           propsSchema: buttonPropsSchema as any,
           defaultProps: buttonDefaultProps as any,
+          childMode: 'single',
           version: '1.1.0',
         },
       });
