@@ -7,6 +7,88 @@ import { z } from 'zod';
 export const MAX_DEPTH = 20;
 export const MAX_NODES = 500;
 
+type ChildMode = 'none' | 'single' | 'multi' | 'slots';
+
+// SDUI wire-format type → arity. Snake_case / lowercase keys to match
+// the JSON SDK consumes. Anything not listed defaults to 'multi'
+// (permissive — server-side check is a safety net, not the source of truth).
+const SDUI_ARITY: Record<string, ChildMode> = {
+  // leaves
+  text: 'none', icon: 'none', image: 'none', sized_box: 'none', spacer: 'none',
+  divider: 'none', text_input: 'none', text_area: 'none', placeholder: 'none',
+  checkbox: 'none', radio: 'none', switch: 'none', slider: 'none',
+  // single-child
+  container: 'single', padding: 'single', center: 'single', align: 'single',
+  expanded: 'single', flexible: 'single', safe_area: 'single',
+  single_child_scroll_view: 'single', clip_rrect: 'single', clip_oval: 'single',
+  aspect_ratio: 'single', fitted_box: 'single', opacity: 'single', card: 'single',
+  gesture_detector: 'single', ink_well: 'single',
+  button: 'single', icon_button: 'single', elevated_button: 'single',
+  outlined_button: 'single', text_button: 'single', filled_button: 'single',
+  floating_action_button: 'single',
+  // multi
+  column: 'multi', row: 'multi', stack: 'multi', wrap: 'multi',
+  list_view: 'multi', grid_view: 'multi', page_view: 'multi',
+  custom_scroll_view: 'multi', form: 'multi',
+  // slots — treat as 'multi' on the server (don't strictly validate
+  // slot names yet, since the SDK builder might emit them as a children array).
+  scaffold: 'multi', app_bar: 'multi', list_tile: 'multi',
+};
+
+function getChildMode(type: unknown): ChildMode {
+  if (typeof type !== 'string') return 'multi';
+  return SDUI_ARITY[type] ?? 'multi'; // default permissive
+}
+
+const SLOT_FIELDS = [
+  'body', 'appBar', 'drawer', 'floatingActionButton', 'bottomNavigationBar',
+  'title', 'leading', 'actions', 'subtitle', 'trailing',
+] as const;
+
+function checkArity(node: unknown, path: string): string | null {
+  if (!node || typeof node !== 'object') return null;
+  const obj = node as Record<string, unknown>;
+  const mode = getChildMode(obj.type);
+  const children = Array.isArray(obj.children) ? obj.children : [];
+
+  if (mode === 'none' && children.length > 0) {
+    return `${path} (${obj.type}) is a leaf widget but has ${children.length} child(ren)`;
+  }
+  if (mode === 'single' && children.length > 1) {
+    return `${path} (${obj.type}) is a single-child widget but has ${children.length} children`;
+  }
+  // Also check inline single-child slots like `child:` (Flutter uses `child` for the lone
+  // child in single-child widgets). Some SDUI emitters use both `child` and `children`:
+  if (mode === 'single' && obj.child && children.length >= 1) {
+    return `${path} (${obj.type}) has both 'child' and 'children' fields — pick one`;
+  }
+
+  // Recurse into children array
+  for (let i = 0; i < children.length; i++) {
+    const err = checkArity(children[i], `${path}.children[${i}]`);
+    if (err) return err;
+  }
+  // Recurse into inline child
+  if (obj.child) {
+    const err = checkArity(obj.child, `${path}.child`);
+    if (err) return err;
+  }
+  // Recurse into named slot fields
+  for (const slot of SLOT_FIELDS) {
+    const v = obj[slot];
+    if (Array.isArray(v)) {
+      for (let i = 0; i < v.length; i++) {
+        const err = checkArity(v[i], `${path}.${slot}[${i}]`);
+        if (err) return err;
+      }
+    } else if (v && typeof v === 'object') {
+      const err = checkArity(v, `${path}.${slot}`);
+      if (err) return err;
+    }
+  }
+  return null;
+}
+
 /** All widget types supported by the SDUI renderer. */
 export const VALID_WIDGET_TYPES = new Set([
   'scaffold',
@@ -161,6 +243,18 @@ export function validateSduiJson(root: unknown, options: ValidateOptions = {}): 
     return {
       valid: false,
       error: braceErr,
+      warnings,
+      nodeCount,
+      unknownTypes,
+    };
+  }
+
+  // Arity validation: every node's children count must match its registered arity
+  const arityErr = checkArity(root, 'root');
+  if (arityErr) {
+    return {
+      valid: false,
+      error: `arity violation: ${arityErr}`,
       warnings,
       nodeCount,
       unknownTypes,
