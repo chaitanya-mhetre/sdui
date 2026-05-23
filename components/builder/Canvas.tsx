@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { DeviceFrame } from './DeviceFrame';
 import { DevicePreview } from './DevicePreview';
+import { SelectionToolbar } from './SelectionToolbar';
 import { validateDrop } from '@/lib/flutterRules';
 
 export function Canvas() {
@@ -201,17 +202,20 @@ export function Canvas() {
               transformOrigin: 'center center',
             }}
           >
-            <DeviceFrame preset={devicePreset ?? null} className="w-full h-full flex flex-col" frameColor={frameColor} screenBackground={screenBackground}>
-              <LayoutRenderer
-                node={rootNode}
-                isInteractive={true}
-                onNodeClick={handleNodeClick}
-                selectedNodeId={selectedNodeId}
-                hoverNodeId={hoverNodeId}
-                onNodeHover={setHoverNodeId}
-                platformComponents={platformComponents}
-              />
-            </DeviceFrame>
+            <div className="relative w-full h-full">
+              <DeviceFrame preset={devicePreset ?? null} className="w-full h-full flex flex-col" frameColor={frameColor} screenBackground={screenBackground}>
+                <LayoutRenderer
+                  node={rootNode}
+                  isInteractive={true}
+                  onNodeClick={handleNodeClick}
+                  selectedNodeId={selectedNodeId}
+                  hoverNodeId={hoverNodeId}
+                  onNodeHover={setHoverNodeId}
+                  platformComponents={platformComponents}
+                />
+              </DeviceFrame>
+              <SelectionToolbar containerRef={containerRef} />
+            </div>
           </div>
           <p className="absolute bottom-[-24px] left-1/2 -translate-x-1/2 text-xs text-muted-foreground whitespace-nowrap">
             {devicePreset?.label ?? 'Phone (Android)'} · {deviceWidth}×{deviceHeight}
