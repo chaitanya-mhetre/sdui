@@ -53,11 +53,19 @@ export interface ValidationResult {
   unknownTypes: string[];
 }
 
+export type LayoutKind = 'full' | 'embed';
+
+export interface ValidateOptions {
+  layoutKind?: LayoutKind;
+}
+
+const EMBED_FORBIDDEN_ROOTS = new Set(['scaffold', 'appbar', 'drawer', 'floatingactionbutton']);
+
 /**
  * Recursively validates a SDUI layout node tree.
  * Returns detailed validation result with warnings for unknown types.
  */
-export function validateSduiJson(root: unknown): ValidationResult {
+export function validateSduiJson(root: unknown, options: ValidateOptions = {}): ValidationResult {
   const warnings: string[] = [];
   const unknownTypes: string[] = [];
   let nodeCount = 0;
@@ -121,13 +129,80 @@ export function validateSduiJson(root: unknown): ValidationResult {
   }
 
   const result = visit(root, 0);
+  if (!result.valid) {
+    return {
+      valid: false,
+      error: result.error,
+      warnings,
+      nodeCount,
+      unknownTypes,
+    };
+  }
+
+  // layoutKind enforcement: forbidden roots for embed layouts
+  if (options.layoutKind === 'embed') {
+    const rootObj = root as Record<string, unknown>;
+    const rootType = typeof rootObj?.type === 'string' ? rootObj.type.toLowerCase() : '';
+    if (EMBED_FORBIDDEN_ROOTS.has(rootType)) {
+      return {
+        valid: false,
+        error: `"${rootObj.type}" is only valid as a full-screen root, not in an embed layout. ` +
+               `Set layoutKind: "full" or use a box-shaped root (container/column/row/sizedBox).`,
+        warnings,
+        nodeCount,
+        unknownTypes,
+      };
+    }
+  }
+
+  // Brace-syntax validation: {{...}} must be balanced in all string values
+  const braceErr = checkBraceSyntax(root);
+  if (braceErr) {
+    return {
+      valid: false,
+      error: braceErr,
+      warnings,
+      nodeCount,
+      unknownTypes,
+    };
+  }
+
   return {
-    valid: result.valid,
-    error: result.error,
+    valid: true,
     warnings,
     nodeCount,
     unknownTypes,
   };
+}
+
+function checkBraceSyntax(value: unknown, path: string = ''): string | null {
+  if (typeof value === 'string') {
+    let open = 0;
+    for (let i = 0; i < value.length - 1; i++) {
+      if (value[i] === '{' && value[i + 1] === '{') { open++; i++; }
+      else if (value[i] === '}' && value[i + 1] === '}') { open--; i++; }
+      if (open < 0) {
+        return `unbalanced braces at ${path}: ${JSON.stringify(value)}`;
+      }
+    }
+    if (open !== 0) return `unbalanced braces at ${path}: ${JSON.stringify(value)}`;
+    return null;
+  }
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i++) {
+      const e = checkBraceSyntax(value[i], `${path}[${i}]`);
+      if (e) return e;
+    }
+    return null;
+  }
+  if (value && typeof value === 'object') {
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      const e = checkBraceSyntax(v, `${path}.${k}`);
+      if (e) return e;
+    }
+    return null;
+  }
+  return null;
 }
 
 /** Lightweight Zod schema — only enforces the top-level structure. Deep validation is via validateSduiJson(). */
