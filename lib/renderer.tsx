@@ -3,6 +3,7 @@ import { LayoutNode, ComponentDefinition } from '@/types';
 import { getComponentDefinition } from './componentRegistry';
 import { validateDrop } from './flutterRules';
 import { useBuilderStore } from '@/store/builderStore';
+import { parsePadding, parseGap, parseGradient, parseBorderRadius, parseColor } from './renderer-utils';
 
 /** Map SDUI / lowercase / snake_case type names to builder registry ids */
 const SDUI_TYPE_TO_REGISTRY: Record<string, string> = {
@@ -13,10 +14,22 @@ const SDUI_TYPE_TO_REGISTRY: Record<string, string> = {
   text: 'Text',
   icon: 'Icon',
   single_child_scroll_view: 'SingleChildScrollView',
+  scroll_view: 'SingleChildScrollView',
+  scrollview: 'SingleChildScrollView',
   sized_box: 'SizedBox',
   container: 'Container',
   vstack: 'VStack',
   hstack: 'HStack',
+  grid: 'GridView',
+  grid_view: 'GridView',
+  gridview: 'GridView',
+  elevated_button: 'Button',
+  elevatedbutton: 'Button',
+  filled_button: 'FilledButton',
+  outlined_button: 'OutlinedButton',
+  text_button: 'TextButton',
+  icon_button: 'IconButton',
+  floating_action_button: 'FloatingActionButton',
 };
 
 function normalizeComponentType(type: string): string {
@@ -393,17 +406,15 @@ function PlatformComponentBlock({
   parentId,
   indexInParent,
 }: RendererProps & { componentDef: ComponentDefinition; platformComponents: ComponentDefinition[] }) {
-  const padding = (node.props.padding as string) || '0';
-  const gap = (node.props.gap as string) || '0';
-  const backgroundColor = (node.props.backgroundColor as string) || 'transparent';
-  const borderRadius = (node.props.borderRadius as string) || '0';
+  const rawPcBg = (node.props.backgroundColor as string) ?? 'transparent';
+  const pcBackgroundColor = parseColor(rawPcBg) ?? rawPcBg;
   const width = (node.props.width as string) || '100%';
   const height = (node.props.height as string) || 'auto';
   const isSelected = selectedNodeId === node.id;
   const isHovered = hoverNodeId === node.id && !isSelected;
-  const paddingClass = getPaddingClass(padding);
-  const gapClass = getGapClass(gap);
-  const radiusClass = getBorderRadiusClass(borderRadius);
+  const pcPaddingStyle = parsePadding(node.props.padding);
+  const pcGapStyle = parseGap((node.props.spacing ?? node.props.gap) as unknown);
+  const pcRadiusStyle = parseBorderRadius(node.props.borderRadius);
 
   const dragProps =
     isInteractive && parentId !== undefined && indexInParent !== undefined
@@ -426,8 +437,8 @@ function PlatformComponentBlock({
       onMouseEnter={() => onNodeHover?.(node.id)}
       onMouseLeave={() => onNodeHover?.(null)}
       title={componentDef.name}
-      className={`flex flex-col ${paddingClass} ${gapClass} ${radiusClass} ${isSelected ? 'ring-2 ring-primary' : isHovered ? 'ring-1 ring-primary/40' : ''}`}
-      style={{ backgroundColor, width, height }}
+      className={`flex flex-col ${isSelected ? 'ring-2 ring-primary' : isHovered ? 'ring-1 ring-primary/40' : ''}`}
+      style={{ backgroundColor: pcBackgroundColor, width, height, ...pcPaddingStyle, ...pcGapStyle, ...pcRadiusStyle }}
     >
       <span className="text-xs text-muted-foreground mb-1">[{componentDef.name}]</span>
       {node.children.map((child, i) => (
@@ -463,21 +474,36 @@ function LayoutContainer({
 }: RendererProps & { componentDef: any }) {
   const dropTarget = useBuilderStore((s) => s.dropTarget);
 
-  const direction = (node.props.direction as string) || 'column';
-  const padding = (node.props.padding as string) || '0';
-  const gap = (node.props.gap as string) || '0';
-  const backgroundColor = (node.props.backgroundColor as string) || 'transparent';
-  const borderRadius = (node.props.borderRadius as string) || '0';
+  // Derive flex direction: explicit prop, or based on renderType
+  const renderType = (componentDef?.id ?? normalizeComponentType(node.componentType));
+  const defaultDir = (renderType === 'HStack' || renderType === 'Row') ? 'row' : 'column';
+  const direction = (node.props.direction as string) || defaultDir;
+
+  // Width / height
   const width = (node.props.width as string) || '100%';
   const height = (node.props.height as string) || 'auto';
 
+  // Background color — also check `color` alias
+  const rawBg = (node.props.backgroundColor as string) ?? (node.props.color as string) ?? 'transparent';
+  const backgroundColor = parseColor(rawBg) ?? rawBg;
+
+  // Gradient overrides backgroundColor when present
+  const gradientStyle = parseGradient(node.props.gradient);
+
+  // Padding: prefer inline style over Tailwind class for multi-value support
+  const paddingStyle = parsePadding(node.props.padding);
+
+  // Gap: support both spacing and gap aliases
+  const gapStyle = parseGap((node.props.spacing ?? node.props.gap) as unknown);
+
+  // Border radius via inline style
+  const borderRadiusStyle = parseBorderRadius(node.props.borderRadius);
+
+  // GridView: columns alias for crossAxisCount
+  const gridCols = (node.props.crossAxisCount ?? node.props.columns ?? 2) as number;
+
   const isSelected = selectedNodeId === node.id;
   const isHovered = hoverNodeId === node.id && !isSelected;
-
-  const flexDirection = direction === 'row' ? 'flex-row' : 'flex-col';
-  const paddingClass = getPaddingClass(padding);
-  const gapClass = getGapClass(gap);
-  const radiusClass = getBorderRadiusClass(borderRadius);
 
   // Which sibling-index slot shows the drop indicator inside this container
   const showIndicatorAt =
@@ -516,6 +542,30 @@ function LayoutContainer({
     state.setDropTarget({ parentId: node.id, index: node.children.length });
   };
 
+  // GridView renders as a CSS grid instead of flex
+  const isGrid = renderType === 'GridView';
+
+  const containerStyle: React.CSSProperties = {
+    ...(isGrid
+      ? {
+          display: 'grid',
+          gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`,
+        }
+      : {
+          display: 'flex',
+          flexDirection: direction === 'row' ? 'row' : 'column',
+        }),
+    ...paddingStyle,
+    ...gapStyle,
+    ...borderRadiusStyle,
+    // gradient overrides plain backgroundColor
+    ...(gradientStyle.background
+      ? gradientStyle
+      : { backgroundColor }),
+    width,
+    height,
+  };
+
   return (
     <div
       {...selfDragProps}
@@ -531,12 +581,8 @@ function LayoutContainer({
         handleContainerBodyDragOver(e);
       } : undefined}
       onDrop={isInteractive ? handleNodeDrop : undefined}
-      className={`flex ${flexDirection} ${paddingClass} ${gapClass} ${radiusClass} ${isSelected ? 'ring-2 ring-primary' : isHovered ? 'ring-1 ring-primary/40' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
-      style={{
-        backgroundColor,
-        width,
-        height,
-      }}
+      className={`${isSelected ? 'ring-2 ring-primary' : isHovered ? 'ring-1 ring-primary/40' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
+      style={containerStyle}
     >
       {node.children.map((child, i) => (
         <React.Fragment key={child.id}>
@@ -584,8 +630,11 @@ function TextComponent({
   const [isEditing, setIsEditing] = useState(false);
   const editRef = useRef<HTMLSpanElement>(null);
 
+  const styleObj = (node.props.style as Record<string, unknown>) ?? {};
+
   const getProp = (key: string, defaultVal: any) => {
     if (node.props && node.props[key] !== undefined) return node.props[key];
+    if (styleObj[key] !== undefined) return styleObj[key];
     if ((node as any)[key] !== undefined) return (node as any)[key];
     return defaultVal;
   };
@@ -595,7 +644,8 @@ function TextComponent({
   const fontWeight = getProp('fontWeight', 'normal');
   const fontStyle = getProp('fontStyle', 'normal');
   const fontFamily = getProp('fontFamily', '');
-  const color = getProp('color', '#000000');
+  const rawColor = getProp('color', '#000000') as string;
+  const color = parseColor(rawColor) ?? rawColor;
   const textAlign = getProp('textAlign', 'left');
   const letterSpacing = getProp('letterSpacing', 0);
   const wordSpacing = getProp('wordSpacing', 0);
@@ -656,9 +706,15 @@ function TextComponent({
         }
       : {};
 
+  const resolvedFontWeight: React.CSSProperties['fontWeight'] =
+    fontWeight === 'bold' ? 'bold'
+    : fontWeight === 'normal' ? 'normal'
+    : typeof fontWeight === 'number' ? fontWeight
+    : (Number(fontWeight) || 'normal') as any;
+
   const textStyle: React.CSSProperties = {
-    fontSize: `${fontSize}px`,
-    fontWeight: fontWeight === '600' ? 600 : fontWeight === 'bold' ? 'bold' : 'normal',
+    fontSize: typeof fontSize === 'number' ? `${fontSize}px` : `${parseFloat(String(fontSize)) || 14}px`,
+    fontWeight: resolvedFontWeight,
     fontStyle,
     fontFamily: fontFamily || 'inherit',
     color,
@@ -726,9 +782,19 @@ function IconComponent({
   parentId,
   indexInParent,
 }: RendererProps & { componentDef: any }) {
-  const name = (node.props.name as string) || (node.props.icon as string) || 'search';
-  const size = (node.props.size as number) || 24;
-  const color = (node.props.color as string) || '#000000';
+  const iconStyleObj = (node.props.style as Record<string, unknown>) ?? {};
+  const name = (node.props.name as string)
+    ?? (node.props.icon as string)
+    ?? (node.props.data as string)
+    ?? (iconStyleObj.iconType as string)
+    ?? 'search';
+  const size = (node.props.size as number)
+    ?? (iconStyleObj.size as number)
+    ?? 24;
+  const rawIconColor = (node.props.color as string)
+    ?? (iconStyleObj.color as string)
+    ?? '#000000';
+  const color = parseColor(rawIconColor) ?? rawIconColor;
   const isSelected = selectedNodeId === node.id;
   const isHovered = hoverNodeId === node.id && !isSelected;
 
@@ -837,23 +903,35 @@ function ButtonComponent({
   parentId,
   indexInParent,
 }: RendererProps & { componentDef: any }) {
+  const btnStyleObj = (node.props.style as Record<string, unknown>) ?? {};
+
   const getProp = (key: string, defaultVal: any) => {
     if (node.props && node.props[key] !== undefined) return node.props[key];
+    if (btnStyleObj[key] !== undefined) return btnStyleObj[key];
     if ((node as any)[key] !== undefined) return (node as any)[key];
     return defaultVal;
   };
 
-  const label = getProp('label', 'Button');
-  const backgroundColor = getProp('backgroundColor', '#6366F1');
-  const color = getProp('color', '#FFFFFF');
+  // `data` is a common label alias in AI-generated JSON
+  const label = getProp('label', getProp('data', 'Button'));
+  const rawBtnBg = getProp('backgroundColor', btnStyleObj.backgroundColor ?? '#6366F1') as string;
+  const backgroundColor = parseColor(rawBtnBg) ?? rawBtnBg;
+  // `textColor` is used by some SDUI flavours
+  const rawBtnColor = getProp('color', btnStyleObj.textColor ?? btnStyleObj.color ?? '#FFFFFF') as string;
+  const color = parseColor(rawBtnColor) ?? rawBtnColor;
   const fontSize = Number(getProp('fontSize', 14));
-  const fwRaw = getProp('fontWeight', '600');
+  const fwRaw = getProp('fontWeight', btnStyleObj.fontWeight ?? '600');
   const fontWeight = fwRaw === 'bold' ? 'bold' : fwRaw === 'normal' ? 'normal' : Number(fwRaw) || 600;
-  const borderRadius = Number(getProp('borderRadius', 8));
+  const borderRadius = Number(getProp('borderRadius', btnStyleObj.borderRadius ?? 8));
   const elevation = Number(getProp('elevation', 2));
-  const paddingHorizontal = Number(getProp('paddingHorizontal', 16));
-  const paddingVertical = Number(getProp('paddingVertical', 12));
-  
+
+  // Padding: prefer nested style.padding (may be "16 20"), then explicit H/V
+  const rawPadding = node.props.padding ?? btnStyleObj.padding;
+  const parsedPaddingStyle = parsePadding(rawPadding);
+  const hasParsedPadding = Object.keys(parsedPaddingStyle).length > 0;
+  const paddingHorizontal = hasParsedPadding ? undefined : Number(getProp('paddingHorizontal', 16));
+  const paddingVertical = hasParsedPadding ? undefined : Number(getProp('paddingVertical', 12));
+
   // Try to parse fullWidth as boolean safely
   const rawFW = getProp('fullWidth', false);
   const fullWidth = rawFW === true || rawFW === 'true';
@@ -903,10 +981,14 @@ function ButtonComponent({
         fontSize: `${fontSize}px`,
         fontWeight,
         borderRadius: `${borderRadius}px`,
-        paddingTop: `${paddingVertical}px`,
-        paddingBottom: `${paddingVertical}px`,
-        paddingLeft: `${paddingHorizontal}px`,
-        paddingRight: `${paddingHorizontal}px`,
+        ...(hasParsedPadding
+          ? parsedPaddingStyle
+          : {
+              paddingTop: `${paddingVertical}px`,
+              paddingBottom: `${paddingVertical}px`,
+              paddingLeft: `${paddingHorizontal}px`,
+              paddingRight: `${paddingHorizontal}px`,
+            }),
         width: fullWidth ? '100%' : 'auto',
         boxShadow,
         display: fullWidth ? 'flex' : 'inline-flex',
