@@ -30,6 +30,7 @@ const SDUI_TYPE_TO_REGISTRY: Record<string, string> = {
   text_button: 'TextButton',
   icon_button: 'IconButton',
   floating_action_button: 'FloatingActionButton',
+  carousel: 'Carousel',
 };
 
 function normalizeComponentType(type: string): string {
@@ -379,6 +380,21 @@ export function LayoutRenderer({
           selectedNodeId={selectedNodeId}
           hoverNodeId={hoverNodeId}
           onNodeHover={onNodeHover}
+          parentId={parentId}
+          indexInParent={indexInParent}
+        />
+      );
+
+    case 'Carousel':
+      return (
+        <CarouselComponent
+          node={node}
+          isInteractive={isInteractive}
+          onNodeClick={onNodeClick}
+          selectedNodeId={selectedNodeId}
+          hoverNodeId={hoverNodeId}
+          onNodeHover={onNodeHover}
+          platformComponents={platformComponents}
           parentId={parentId}
           indexInParent={indexInParent}
         />
@@ -1215,6 +1231,129 @@ function SpacerComponent({
       style={style}
       title={node.componentType}
     />
+  );
+}
+
+// ─── Carousel ────────────────────────────────────────────────────────────────
+
+function CarouselComponent({
+  node,
+  isInteractive,
+  onNodeClick,
+  selectedNodeId,
+  hoverNodeId,
+  onNodeHover,
+  platformComponents = [],
+  parentId,
+  indexInParent,
+}: RendererProps) {
+  const variant = (node.props.variant as string) ?? 'basic';
+  const height = Number(node.props.height) || 200;
+  const autoPlay = Boolean(node.props.autoPlay);
+  const interval = Number(node.props.interval) || 3000;
+  const loop = node.props.loop !== false;
+  const showDots = node.props.showDots !== false;
+  const items = node.children ?? [];
+  const [active, setActive] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-play
+  useEffect(() => {
+    if (!autoPlay || items.length <= 1) return;
+    const id = setInterval(() => {
+      setActive((i) => {
+        const next = i + 1;
+        if (next >= items.length) return loop ? 0 : i;
+        return next;
+      });
+    }, interval);
+    return () => clearInterval(id);
+  }, [autoPlay, interval, loop, items.length]);
+
+  // Scroll to active item
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const child = el.children[active] as HTMLElement | undefined;
+    if (child) {
+      el.scrollTo({ left: child.offsetLeft, behavior: 'smooth' });
+    }
+  }, [active]);
+
+  const isSelected = selectedNodeId === node.id;
+  const isHovered = hoverNodeId === node.id && !isSelected;
+
+  const itemWidthClass =
+    variant === 'snap' ? 'min-w-[85%] mr-3' :
+    variant === 'fullscreen' ? 'min-w-full' :
+    'min-w-full';
+
+  const dragProps =
+    isInteractive && parentId !== undefined && indexInParent !== undefined
+      ? {
+          draggable: true as const,
+          onDragStart: (e: React.DragEvent) => startNodeDrag(e, node.id),
+          onDragEnd: endNodeDrag,
+          onDragOver: (e: React.DragEvent) => handleNodeDragOver(e, parentId, indexInParent),
+          onDrop: handleNodeDrop,
+        }
+      : {};
+
+  return (
+    <div
+      {...dragProps}
+      onClick={(e) => { e.stopPropagation(); onNodeClick?.(node.id); }}
+      onMouseEnter={() => onNodeHover?.(node.id)}
+      onMouseLeave={() => onNodeHover?.(null)}
+      className={`relative w-full ${isSelected ? 'ring-2 ring-primary' : isHovered ? 'ring-1 ring-primary/40' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
+      style={{ height }}
+    >
+      <div
+        ref={scrollRef}
+        className="w-full h-full overflow-x-auto flex snap-x snap-mandatory scroll-smooth"
+        style={{ scrollbarWidth: 'none' }}
+        onScroll={() => {
+          const el = scrollRef.current;
+          if (!el || !el.children[0]) return;
+          const itemWidth = (el.children[0] as HTMLElement).offsetWidth;
+          if (itemWidth === 0) return;
+          const idx = Math.round(el.scrollLeft / itemWidth);
+          setActive(Math.max(0, Math.min(idx, items.length - 1)));
+        }}
+      >
+        {items.map((child, i) => (
+          <div
+            key={child.id}
+            className={`${itemWidthClass} h-full snap-start flex-shrink-0`}
+          >
+            <LayoutRenderer
+              node={child}
+              isInteractive={isInteractive}
+              onNodeClick={onNodeClick}
+              selectedNodeId={selectedNodeId}
+              hoverNodeId={hoverNodeId}
+              onNodeHover={onNodeHover}
+              platformComponents={platformComponents}
+              parentId={node.id}
+              indexInParent={i}
+            />
+          </div>
+        ))}
+      </div>
+      {showDots && items.length > 1 && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+          {items.map((_, i) => (
+            <button
+              key={i}
+              onClick={(e) => { e.stopPropagation(); setActive(i); }}
+              className={`h-2 rounded-full transition-all ${
+                i === active ? 'bg-primary w-4' : 'bg-gray-400/60 w-2'
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

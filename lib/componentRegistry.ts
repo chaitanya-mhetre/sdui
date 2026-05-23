@@ -983,6 +983,31 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     defaultProps: { placeholder: 'Enter text…', rows: 4, borderRadius: 8 },
   },
 
+  // ── Carousel ──────────────────────────────────────────────────────────────
+  Carousel: {
+    id: 'Carousel',
+    name: 'Carousel',
+    category: 'display',
+    icon: 'GalleryHorizontal',
+    description: 'Horizontal carousel with multiple variants, dot indicators, autoplay.',
+    allowChildren: true,
+    children: { mode: 'multi' },
+    properties: [
+      { name: 'variant', type: 'select', label: 'Variant', default: 'basic',
+        options: [
+          { label: 'Basic (full-width pages)', value: 'basic' },
+          { label: 'Snap (peek next)', value: 'snap' },
+          { label: 'Fullscreen', value: 'fullscreen' },
+        ], category: 'appearance' },
+      { name: 'height', type: 'number', label: 'Height', default: 200, min: 80, max: 800, category: 'layout' },
+      { name: 'autoPlay', type: 'boolean', label: 'Auto-play', default: false, category: 'behavior' },
+      { name: 'interval', type: 'number', label: 'Interval (ms)', default: 3000, min: 500, max: 10000, category: 'behavior' },
+      { name: 'loop', type: 'boolean', label: 'Loop', default: true, category: 'behavior' },
+      { name: 'showDots', type: 'boolean', label: 'Show dots', default: true, category: 'appearance' },
+    ],
+    defaultProps: { variant: 'basic', height: 200, autoPlay: false, interval: 3000, loop: true, showDots: true },
+  },
+
   // Navigation (bottom/top nav bar)
   Navigation: {
     id: 'Navigation',
@@ -1084,6 +1109,7 @@ function normalizeKey(type: string): string {
     form: 'Form',
     text_form_field: 'TextFormField',
     textformfield: 'TextFormField',
+    carousel: 'Carousel',
   };
 
   const lower = type.toLowerCase();
