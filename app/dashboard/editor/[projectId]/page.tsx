@@ -248,6 +248,7 @@ export default function EditorPage({ params }: { params: Promise<{ projectId: st
       activeLayoutId={activeLayoutId}
       onSwitchLayout={switchLayout}
       onAddScreen={addNewScreen}
+      onLayoutsChanged={loadProject}
     />
   );
 }

@@ -8,10 +8,27 @@ import { layoutToCode, codeToLayout } from '@/lib/layoutCode';
 import { parseLayout } from '@/lib/sdui/layoutParser';
 import { validateSduiJson } from '@/lib/sdui/validation';
 import { apiRequest } from '@/lib/api-client';
-import { FileJson, Plus, CheckCircle2, Circle, AlertCircle, Save, Check } from 'lucide-react';
+import { FileJson, Plus, CheckCircle2, Circle, AlertCircle, Save, Check, MoreHorizontal, Pencil, Copy, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { builderRootToSduiJson } from '@/lib/builderToSdui';
 import { useTheme } from 'next-themes';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Lazy-load Monaco editor to avoid SSR issues
 const MonacoEditor = dynamic(
@@ -47,6 +64,7 @@ interface CodeViewProps {
   activeLayoutId?: string | null;
   onSwitchLayout?: (layout: DbLayout) => void;
   onAddScreen?: (name: string) => void;
+  onLayoutsChanged?: () => void;
 }
 
 export function CodeView({
@@ -54,6 +72,7 @@ export function CodeView({
   activeLayoutId,
   onSwitchLayout,
   onAddScreen,
+  onLayoutsChanged,
 }: CodeViewProps) {
   const rootNode = useBuilderStore((state) => state.rootNode);
   const setRootNode = useBuilderStore((state) => state.setRootNode);
@@ -66,6 +85,12 @@ export function CodeView({
   const [addingScreen, setAddingScreen] = useState(false);
   const [newScreenName, setNewScreenName] = useState('');
   const [isDirty, setIsDirty] = useState(false);
+
+  // ── Per-layout file management state ────────────────────────────────────
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [deletingLayout, setDeletingLayout] = useState<DbLayout | null>(null);
+  const [fileActionBusy, setFileActionBusy] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const savedCodeRef = useRef<string>('');
   const { resolvedTheme } = useTheme();
@@ -222,6 +247,65 @@ export function CodeView({
     []
   );
 
+  // ── File management handlers ─────────────────────────────────────────────
+
+  const startRename = (layout: DbLayout) => {
+    setRenamingId(layout.id);
+    setRenameValue(layout.name);
+  };
+
+  const commitRename = async () => {
+    if (!renamingId || fileActionBusy) return;
+    const trimmed = renameValue.trim();
+    if (!trimmed) {
+      setRenamingId(null);
+      return;
+    }
+    setFileActionBusy(true);
+    try {
+      await fetch(`/api/layouts/${renamingId}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: trimmed }),
+      });
+      onLayoutsChanged?.();
+    } catch (err) {
+      console.error('Rename failed:', err);
+    } finally {
+      setFileActionBusy(false);
+      setRenamingId(null);
+    }
+  };
+
+  const duplicateLayout = async (layout: DbLayout) => {
+    if (fileActionBusy) return;
+    setFileActionBusy(true);
+    try {
+      await fetch(`/api/layouts/${layout.id}/duplicate`, { method: 'POST' });
+      onLayoutsChanged?.();
+    } catch (err) {
+      console.error('Duplicate failed:', err);
+    } finally {
+      setFileActionBusy(false);
+    }
+  };
+
+  const performDelete = async () => {
+    if (!deletingLayout || fileActionBusy) return;
+    setFileActionBusy(true);
+    try {
+      await fetch(`/api/layouts/${deletingLayout.id}`, { method: 'DELETE' });
+      onLayoutsChanged?.();
+    } catch (err) {
+      console.error('Delete failed:', err);
+    } finally {
+      setFileActionBusy(false);
+      setDeletingLayout(null);
+    }
+  };
+
+  // ── Add screen handler ───────────────────────────────────────────────────
+
   const handleAddScreen = async () => {
     if (!newScreenName.trim() || !onAddScreen) return;
     await onAddScreen(newScreenName.trim());
@@ -249,6 +333,28 @@ export function CodeView({
 
   return (
     <div className="flex-1 flex overflow-hidden">
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deletingLayout} onOpenChange={(open) => { if (!open) setDeletingLayout(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete &ldquo;{deletingLayout?.name}&rdquo;?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the layout and all its published versions. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={fileActionBusy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={performDelete}
+              disabled={fileActionBusy}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {fileActionBusy ? 'Deleting…' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Left — Screens list */}
       <div className="w-56 border-r border-border bg-card flex flex-col">
         <div className="p-3 border-b border-border flex items-center justify-between">
@@ -270,31 +376,93 @@ export function CodeView({
         <ul className="flex-1 overflow-y-auto p-2 space-y-1">
           {screens.map((screen) => {
             const isActive = screen.id === activeId;
+            const isRenaming = renamingId === screen.id;
             return (
-              <li key={screen.id}>
-                <button
-                  type="button"
-                  onClick={() => onSwitchLayout?.(screen)}
-                  className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition ${
+              <li key={screen.id} className="group">
+                <div
+                  className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
                     isActive
                       ? 'bg-primary/10 text-primary border border-primary/20'
                       : 'text-foreground hover:bg-muted border border-transparent'
                   }`}
                 >
                   <FileJson className="w-4 h-4 shrink-0" />
-                  <span className="truncate flex-1">{screen.name}</span>
-                  {screen.isPublished ? (
-                    <CheckCircle2
-                      className="w-3.5 h-3.5 shrink-0 text-green-500"
-                      aria-label="Published"
+
+                  {/* Name — inline rename input or clickable text */}
+                  {isRenaming ? (
+                    <input
+                      autoFocus
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onBlur={commitRename}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') { e.preventDefault(); commitRename(); }
+                        if (e.key === 'Escape') { e.stopPropagation(); setRenamingId(null); }
+                      }}
+                      className="flex-1 min-w-0 bg-muted text-sm px-1 py-0.5 rounded outline-none ring-1 ring-primary"
+                      onClick={(e) => e.stopPropagation()}
                     />
                   ) : (
-                    <Circle
-                      className="w-3.5 h-3.5 shrink-0 text-muted-foreground/40"
-                      aria-label="Draft"
-                    />
+                    <button
+                      type="button"
+                      className="flex-1 min-w-0 text-left truncate"
+                      onClick={() => onSwitchLayout?.(screen)}
+                    >
+                      {screen.name}
+                    </button>
                   )}
-                </button>
+
+                  {/* Published indicator (hidden while renaming to save space) */}
+                  {!isRenaming && (
+                    screen.isPublished ? (
+                      <CheckCircle2
+                        className="w-3.5 h-3.5 shrink-0 text-green-500"
+                        aria-label="Published"
+                      />
+                    ) : (
+                      <Circle
+                        className="w-3.5 h-3.5 shrink-0 text-muted-foreground/40"
+                        aria-label="Draft"
+                      />
+                    )
+                  )}
+
+                  {/* "..." context menu — visible on hover */}
+                  {!isRenaming && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          title="Layout actions"
+                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-0.5 rounded hover:bg-muted-foreground/20 transition-opacity shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreHorizontal className="w-3.5 h-3.5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem
+                          onClick={(e) => { e.stopPropagation(); startRename(screen); }}
+                        >
+                          <Pencil className="w-3.5 h-3.5 mr-2" /> Rename
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => { e.stopPropagation(); duplicateLayout(screen); }}
+                          disabled={fileActionBusy}
+                        >
+                          <Copy className="w-3.5 h-3.5 mr-2" /> Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={(e) => { e.stopPropagation(); setDeletingLayout(screen); }}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
               </li>
             );
           })}

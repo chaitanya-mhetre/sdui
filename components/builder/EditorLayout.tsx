@@ -39,6 +39,7 @@ interface EditorLayoutProps {
   activeLayoutId?: string | null;
   onSwitchLayout?: (layout: DbLayout) => void;
   onAddScreen?: (name: string) => void;
+  onLayoutsChanged?: () => void;
 }
 
 export function EditorLayout({
@@ -47,6 +48,7 @@ export function EditorLayout({
   activeLayoutId,
   onSwitchLayout,
   onAddScreen,
+  onLayoutsChanged,
 }: EditorLayoutProps) {
   const [leftTab, setLeftTab] = useState<'components' | 'layers'>('components');
   const sidebarOpen = useBuilderStore((state) => state.sidebarOpen);
@@ -160,6 +162,7 @@ export function EditorLayout({
             activeLayoutId={activeLayoutId}
             onSwitchLayout={onSwitchLayout}
             onAddScreen={onAddScreen}
+            onLayoutsChanged={onLayoutsChanged}
           />
         </div>
       ) : (
