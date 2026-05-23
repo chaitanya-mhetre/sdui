@@ -1098,6 +1098,10 @@ function normalizeKey(type: string): string {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
+/** All built-in component definitions indexed by their registry key.
+ *  Exported so seed scripts and other tooling can iterate without duplicating data. */
+export const BUILT_IN_COMPONENTS: Record<string, ComponentDefinition> = componentRegistry;
+
 export function getComponentDefinition(componentId: string): ComponentDefinition | null {
   if (!componentId) return null;
   const key = normalizeKey(componentId);
