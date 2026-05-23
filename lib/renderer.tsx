@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LayoutNode, ComponentDefinition } from '@/types';
 import { getComponentDefinition } from './componentRegistry';
+import { validateDrop } from './flutterRules';
 import { useBuilderStore } from '@/store/builderStore';
 
 /** Map SDUI / lowercase / snake_case type names to builder registry ids */
@@ -77,19 +78,47 @@ function handleNodeDrop(e: React.DragEvent) {
   if (!draggedId || !target) return;
   // Safety: don't allow moving into self or a descendant
   if (draggedId === target.parentId) return;
-  if (state.rootNode) {
-    const draggedNode = state.rootNode.children.length > 0
-      ? (() => {
-          const find = (n: LayoutNode): LayoutNode | null => {
-            if (n.id === draggedId) return n;
-            for (const c of n.children) { const f = find(c); if (f) return f; }
-            return null;
-          };
-          return find(state.rootNode);
-        })()
-      : null;
-    if (draggedNode && isDescendantOrSelf(target.parentId, draggedNode)) return;
+
+  // Find the dragged node in the tree
+  const findNode = (n: LayoutNode): LayoutNode | null => {
+    if (n.id === draggedId) return n;
+    for (const c of n.children) { const f = findNode(c); if (f) return f; }
+    return null;
+  };
+  const draggedNode = state.rootNode ? findNode(state.rootNode) : null;
+
+  if (state.rootNode && draggedNode) {
+    if (isDescendantOrSelf(target.parentId, draggedNode)) return;
   }
+
+  // Arity / rule validation — mirror library-drop path
+  if (draggedNode && state.rootNode) {
+    const normalizedType = normalizeComponentType(draggedNode.componentType);
+    const draggedDef =
+      getComponentDefinition(normalizedType) ??
+      getComponentDefinition(draggedNode.componentType) ??
+      state.platformComponents.find(
+        (p) => p.id === draggedNode.componentType || p.name === draggedNode.componentType
+      ) ??
+      null;
+
+    if (draggedDef) {
+      const rule = validateDrop(
+        target.parentId,
+        state.rootNode,
+        draggedDef,
+        getComponentDefinition,
+        state.platformComponents
+      );
+      if (!rule.allowed) {
+        state.setDropError(`${rule.title}: ${rule.description}`);
+        state.setDraggedNodeId(null);
+        state.setDropTarget(null);
+        return;
+      }
+    }
+  }
+
   state.moveNode(draggedId, target.parentId, target.index);
   state.setDraggedNodeId(null);
   state.setDropTarget(null);

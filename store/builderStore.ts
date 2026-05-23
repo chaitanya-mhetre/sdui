@@ -48,6 +48,9 @@ interface BuilderState {
   /** Insertion point during a canvas drag. parentId = container to insert into; index = position in parent.children. */
   dropTarget: { parentId: string; index: number } | null;
   setDropTarget: (t: { parentId: string; index: number } | null) => void;
+  /** One-shot error message from canvas drag-drop arity validation. Canvas reads + clears this to show a toast. */
+  dropError: string | null;
+  setDropError: (e: string | null) => void;
 
   // Actions
   setCurrentLayout: (layout: Layout) => void;
@@ -276,6 +279,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   dropZoneNodeId: null,
   draggedNodeId: null,
   dropTarget: null,
+  dropError: null,
   hoverNodeId: null,
 
   // Layout actions
@@ -532,6 +536,10 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
 
   setDropTarget: (t: { parentId: string; index: number } | null) => {
     set({ dropTarget: t });
+  },
+
+  setDropError: (e: string | null) => {
+    set({ dropError: e });
   },
 
   setHoverNodeId: (id: string | null) => {

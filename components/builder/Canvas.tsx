@@ -31,6 +31,8 @@ export function Canvas() {
   const dropZoneNodeId = useBuilderStore((state) => state.dropZoneNodeId);
 
   const hoverNodeId = useBuilderStore((state) => state.hoverNodeId);
+  const dropError = useBuilderStore((state) => state.dropError);
+  const setDropError = useBuilderStore((state) => state.setDropError);
 
   const selectNode = useBuilderStore((state) => state.selectNode);
   const setHoverNodeId = useBuilderStore((state) => state.setHoverNodeId);
@@ -109,6 +111,16 @@ export function Canvas() {
       window.removeEventListener('keyup', up);
     };
   }, [isSpaceDown]);
+
+  // Show toast when canvas drag-drop is rejected due to arity rules
+  useEffect(() => {
+    if (!dropError) return;
+    const colonIdx = dropError.indexOf(': ');
+    const title = colonIdx !== -1 ? dropError.slice(0, colonIdx) : dropError;
+    const description = colonIdx !== -1 ? dropError.slice(colonIdx + 2) : undefined;
+    toast({ title, description, variant: 'destructive' });
+    setDropError(null);
+  }, [dropError, setDropError, toast]);
 
   // Fit device frame (with bezel) in canvas; then apply user zoom
   const fitScale =
