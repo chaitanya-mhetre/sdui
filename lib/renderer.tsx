@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import Lottie from 'lottie-react';
 import { LayoutNode, ComponentDefinition } from '@/types';
 import { getComponentDefinition } from './componentRegistry';
 import { validateDrop } from './flutterRules';
@@ -32,6 +33,7 @@ const SDUI_TYPE_TO_REGISTRY: Record<string, string> = {
   icon_button: 'IconButton',
   floating_action_button: 'FloatingActionButton',
   carousel: 'Carousel',
+  lottie: 'Lottie',
 };
 
 function normalizeComponentType(type: string): string {
@@ -419,6 +421,20 @@ export function LayoutRenderer({
           hoverNodeId={hoverNodeId}
           onNodeHover={onNodeHover}
           platformComponents={platformComponents}
+          parentId={parentId}
+          indexInParent={indexInParent}
+        />
+      );
+
+    case 'Lottie':
+      return withAnimation(
+        <LottieComponent
+          node={node}
+          isInteractive={isInteractive}
+          onNodeClick={onNodeClick}
+          selectedNodeId={selectedNodeId}
+          hoverNodeId={hoverNodeId}
+          onNodeHover={onNodeHover}
           parentId={parentId}
           indexInParent={indexInParent}
         />
@@ -1375,6 +1391,87 @@ function CarouselComponent({
               }`}
             />
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Lottie ───────────────────────────────────────────────────────────────────
+
+function LottieComponent({
+  node,
+  isInteractive,
+  onNodeClick,
+  selectedNodeId,
+  hoverNodeId,
+  onNodeHover,
+  parentId,
+  indexInParent,
+}: RendererProps) {
+  const src = (node.props.src as string) ?? (node.props.url as string) ?? '';
+  const width = Number(node.props.width) || 240;
+  const height = Number(node.props.height) || 240;
+  const autoPlay = node.props.autoPlay !== false;
+  const loop = node.props.loop !== false;
+  // speed is not natively supported by lottie-react's top-level API; it can
+  // be applied via the lottieRef.setSpeed() but we keep it in props for SDK
+  // parity — the Flutter side uses it directly.
+  const [data, setData] = useState<object | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!src) return;
+    let cancelled = false;
+    setData(null);
+    setError(null);
+    fetch(src)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((json) => { if (!cancelled) setData(json); })
+      .catch((e) => { if (!cancelled) setError((e as Error).message); });
+    return () => { cancelled = true; };
+  }, [src]);
+
+  const isSelected = selectedNodeId === node.id;
+  const isHovered = hoverNodeId === node.id && !isSelected;
+
+  const dragProps =
+    isInteractive && parentId !== undefined && indexInParent !== undefined
+      ? {
+          draggable: true as const,
+          onDragStart: (e: React.DragEvent) => startNodeDrag(e, node.id),
+          onDragEnd: endNodeDrag,
+          onDragOver: (e: React.DragEvent) => handleNodeDragOver(e, parentId, indexInParent),
+          onDrop: handleNodeDrop,
+        }
+      : {};
+
+  return (
+    <div
+      {...dragProps}
+      onClick={(e) => { e.stopPropagation(); onNodeClick?.(node.id); }}
+      onMouseEnter={() => onNodeHover?.(node.id)}
+      onMouseLeave={() => onNodeHover?.(null)}
+      style={{ width, height, overflow: 'hidden' }}
+      className={`${isSelected ? 'ring-2 ring-primary' : isHovered ? 'ring-1 ring-primary/40' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
+    >
+      {error ? (
+        <div className="w-full h-full bg-destructive/10 text-destructive text-xs flex items-center justify-center p-2 text-center">
+          Lottie error: {error}
+        </div>
+      ) : data ? (
+        <Lottie
+          animationData={data}
+          loop={loop}
+          autoplay={autoPlay}
+          style={{ width: '100%', height: '100%' }}
+        />
+      ) : (
+        <div className="w-full h-full bg-muted/30 flex items-center justify-center text-xs text-muted-foreground">
+          {src ? 'Loading…' : 'No src'}
         </div>
       )}
     </div>

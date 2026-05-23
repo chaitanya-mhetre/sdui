@@ -983,6 +983,26 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     defaultProps: { placeholder: 'Enter text…', rows: 4, borderRadius: 8 },
   },
 
+  // ── Lottie ────────────────────────────────────────────────────────────────
+  Lottie: {
+    id: 'Lottie',
+    name: 'Lottie',
+    category: 'media',
+    icon: 'Play',
+    description: 'Lottie animation player. Fetches JSON from src URL.',
+    allowChildren: false,
+    children: { mode: 'none' },
+    properties: [
+      { name: 'src', type: 'string', label: 'URL', default: '', category: 'data' },
+      { name: 'width', type: 'number', label: 'Width', default: 240, min: 40, max: 1000, category: 'layout' },
+      { name: 'height', type: 'number', label: 'Height', default: 240, min: 40, max: 1000, category: 'layout' },
+      { name: 'autoPlay', type: 'boolean', label: 'Auto play', default: true, category: 'behavior' },
+      { name: 'loop', type: 'boolean', label: 'Loop', default: true, category: 'behavior' },
+      { name: 'speed', type: 'number', label: 'Speed', default: 1, min: 0.1, max: 5, step: 0.1, category: 'behavior' },
+    ],
+    defaultProps: { src: '', width: 240, height: 240, autoPlay: true, loop: true, speed: 1 },
+  },
+
   // ── Carousel ──────────────────────────────────────────────────────────────
   Carousel: {
     id: 'Carousel',
@@ -1110,6 +1130,7 @@ function normalizeKey(type: string): string {
     text_form_field: 'TextFormField',
     textformfield: 'TextFormField',
     carousel: 'Carousel',
+    lottie: 'Lottie',
   };
 
   const lower = type.toLowerCase();
