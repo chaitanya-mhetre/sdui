@@ -42,8 +42,9 @@ export function LayoutRenderer({
   platformComponents = [],
 }: RendererProps) {
   const normalizedType = normalizeComponentType(node.componentType);
+  const builtInDef = getComponentDefinition(normalizedType);
   const componentDef =
-    getComponentDefinition(normalizedType) ??
+    builtInDef ??
     platformComponents.find((p) => p.id === node.componentType || p.id === normalizedType) ??
     platformComponents.find((p) => p.name === node.componentType || p.name === normalizedType);
 
@@ -55,8 +56,10 @@ export function LayoutRenderer({
     );
   }
 
-  // Platform (DB) components: render as generic block
-  const isPlatformComponent = platformComponents.some(
+  // Platform (DB) components: render as generic block — but only if there's no
+  // built-in renderer. Built-ins always win so DB seeds can't shadow them with
+  // a square-bracketed `[Button]` placeholder.
+  const isPlatformComponent = !builtInDef && platformComponents.some(
     (p) => p.id === node.componentType || p.name === node.componentType || p.id === normalizedType || p.name === normalizedType
   );
   if (isPlatformComponent) {
