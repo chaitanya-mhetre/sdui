@@ -1,6 +1,7 @@
 import React from 'react';
 import { LayoutNode, ComponentDefinition } from '@/types';
 import { getComponentDefinition } from './componentRegistry';
+import { useBuilderStore } from '@/store/builderStore';
 
 /** Map SDUI / lowercase / snake_case type names to builder registry ids */
 const SDUI_TYPE_TO_REGISTRY: Record<string, string> = {
@@ -21,6 +22,81 @@ function normalizeComponentType(type: string): string {
   return SDUI_TYPE_TO_REGISTRY[type] ?? type;
 }
 
+// ---------------------------------------------------------------------------
+// Canvas-internal drag helpers (node reorder / reparent)
+// ---------------------------------------------------------------------------
+
+function isDescendantOrSelf(nodeId: string, root: LayoutNode): boolean {
+  if (root.id === nodeId) return true;
+  return root.children.some((c) => isDescendantOrSelf(nodeId, c));
+}
+
+function startNodeDrag(e: React.DragEvent, nodeId: string) {
+  e.stopPropagation();
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('application/x-sdui-node', nodeId);
+  useBuilderStore.getState().setDraggedNodeId(nodeId);
+}
+
+function endNodeDrag(e: React.DragEvent) {
+  e.stopPropagation();
+  useBuilderStore.getState().setDraggedNodeId(null);
+  useBuilderStore.getState().setDropTarget(null);
+}
+
+function handleNodeDragOver(
+  e: React.DragEvent,
+  parentId: string,
+  indexInParent: number
+) {
+  const state = useBuilderStore.getState();
+  if (!state.draggedNodeId) return; // only respond to canvas-internal drags
+  // Prevent dropping on self or any descendant
+  if (state.rootNode && isDescendantOrSelf(parentId, state.rootNode)) {
+    // Allow – parentId here is the SIBLING's parent, not the node itself.
+    // The descendant check is done at drop time for the actual target parent.
+  }
+  if (state.draggedNodeId === parentId) return;
+  e.preventDefault();
+  e.stopPropagation();
+  e.dataTransfer.dropEffect = 'move';
+
+  // Insert ABOVE or BELOW based on cursor Y position within the element
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  const midY = rect.top + rect.height / 2;
+  const insertIndex = e.clientY < midY ? indexInParent : indexInParent + 1;
+  state.setDropTarget({ parentId, index: insertIndex });
+}
+
+function handleNodeDrop(e: React.DragEvent) {
+  e.preventDefault();
+  e.stopPropagation();
+  const state = useBuilderStore.getState();
+  const draggedId = state.draggedNodeId;
+  const target = state.dropTarget;
+  if (!draggedId || !target) return;
+  // Safety: don't allow moving into self or a descendant
+  if (draggedId === target.parentId) return;
+  if (state.rootNode) {
+    const draggedNode = state.rootNode.children.length > 0
+      ? (() => {
+          const find = (n: LayoutNode): LayoutNode | null => {
+            if (n.id === draggedId) return n;
+            for (const c of n.children) { const f = find(c); if (f) return f; }
+            return null;
+          };
+          return find(state.rootNode);
+        })()
+      : null;
+    if (draggedNode && isDescendantOrSelf(target.parentId, draggedNode)) return;
+  }
+  state.moveNode(draggedId, target.parentId, target.index);
+  state.setDraggedNodeId(null);
+  state.setDropTarget(null);
+}
+
+// ---------------------------------------------------------------------------
+
 interface RendererProps {
   node: LayoutNode;
   isInteractive?: boolean;
@@ -29,6 +105,10 @@ interface RendererProps {
   hoverNodeId?: string | null;
   onNodeHover?: (id: string | null) => void;
   platformComponents?: ComponentDefinition[];
+  /** Parent node's id — used for computing drop insertion position */
+  parentId?: string;
+  /** This node's index within its parent's children array */
+  indexInParent?: number;
 }
 
 /**
@@ -42,6 +122,8 @@ export function LayoutRenderer({
   hoverNodeId,
   onNodeHover,
   platformComponents = [],
+  parentId,
+  indexInParent,
 }: RendererProps) {
   const normalizedType = normalizeComponentType(node.componentType);
 
@@ -88,6 +170,8 @@ export function LayoutRenderer({
         hoverNodeId={hoverNodeId}
         onNodeHover={onNodeHover}
         platformComponents={platformComponents}
+        parentId={parentId}
+        indexInParent={indexInParent}
       />
     );
   }
@@ -122,6 +206,8 @@ export function LayoutRenderer({
           hoverNodeId={hoverNodeId}
           onNodeHover={onNodeHover}
           platformComponents={platformComponents}
+          parentId={parentId}
+          indexInParent={indexInParent}
         />
       );
 
@@ -135,6 +221,8 @@ export function LayoutRenderer({
           selectedNodeId={selectedNodeId}
           hoverNodeId={hoverNodeId}
           onNodeHover={onNodeHover}
+          parentId={parentId}
+          indexInParent={indexInParent}
         />
       );
 
@@ -148,6 +236,8 @@ export function LayoutRenderer({
           selectedNodeId={selectedNodeId}
           hoverNodeId={hoverNodeId}
           onNodeHover={onNodeHover}
+          parentId={parentId}
+          indexInParent={indexInParent}
         />
       );
 
@@ -166,6 +256,8 @@ export function LayoutRenderer({
           selectedNodeId={selectedNodeId}
           hoverNodeId={hoverNodeId}
           onNodeHover={onNodeHover}
+          parentId={parentId}
+          indexInParent={indexInParent}
         />
       );
 
@@ -179,6 +271,8 @@ export function LayoutRenderer({
           selectedNodeId={selectedNodeId}
           hoverNodeId={hoverNodeId}
           onNodeHover={onNodeHover}
+          parentId={parentId}
+          indexInParent={indexInParent}
         />
       );
 
@@ -193,6 +287,8 @@ export function LayoutRenderer({
           selectedNodeId={selectedNodeId}
           hoverNodeId={hoverNodeId}
           onNodeHover={onNodeHover}
+          parentId={parentId}
+          indexInParent={indexInParent}
         />
       );
 
@@ -206,6 +302,8 @@ export function LayoutRenderer({
           selectedNodeId={selectedNodeId}
           hoverNodeId={hoverNodeId}
           onNodeHover={onNodeHover}
+          parentId={parentId}
+          indexInParent={indexInParent}
         />
       );
 
@@ -218,6 +316,8 @@ export function LayoutRenderer({
           selectedNodeId={selectedNodeId}
           hoverNodeId={hoverNodeId}
           onNodeHover={onNodeHover}
+          parentId={parentId}
+          indexInParent={indexInParent}
         />
       );
 
@@ -231,6 +331,8 @@ export function LayoutRenderer({
           selectedNodeId={selectedNodeId}
           hoverNodeId={hoverNodeId}
           onNodeHover={onNodeHover}
+          parentId={parentId}
+          indexInParent={indexInParent}
         />
       );
 
@@ -253,6 +355,8 @@ function PlatformComponentBlock({
   hoverNodeId,
   onNodeHover,
   platformComponents,
+  parentId,
+  indexInParent,
 }: RendererProps & { componentDef: ComponentDefinition; platformComponents: ComponentDefinition[] }) {
   const padding = (node.props.padding as string) || '0';
   const gap = (node.props.gap as string) || '0';
@@ -266,8 +370,20 @@ function PlatformComponentBlock({
   const gapClass = getGapClass(gap);
   const radiusClass = getBorderRadiusClass(borderRadius);
 
+  const dragProps =
+    isInteractive && parentId !== undefined && indexInParent !== undefined
+      ? {
+          draggable: true,
+          onDragStart: (e: React.DragEvent) => startNodeDrag(e, node.id),
+          onDragEnd: endNodeDrag,
+          onDragOver: (e: React.DragEvent) => handleNodeDragOver(e, parentId, indexInParent),
+          onDrop: handleNodeDrop,
+        }
+      : {};
+
   return (
     <div
+      {...dragProps}
       onClick={(e) => {
         e.stopPropagation();
         onNodeClick?.(node.id);
@@ -279,7 +395,7 @@ function PlatformComponentBlock({
       style={{ backgroundColor, width, height }}
     >
       <span className="text-xs text-muted-foreground mb-1">[{componentDef.name}]</span>
-      {node.children.map((child) => (
+      {node.children.map((child, i) => (
         <LayoutRenderer
           key={child.id}
           node={child}
@@ -289,6 +405,8 @@ function PlatformComponentBlock({
           hoverNodeId={hoverNodeId}
           onNodeHover={onNodeHover}
           platformComponents={platformComponents}
+          parentId={node.id}
+          indexInParent={i}
         />
       ))}
     </div>
@@ -305,7 +423,11 @@ function LayoutContainer({
   hoverNodeId,
   onNodeHover,
   platformComponents = [],
+  parentId,
+  indexInParent,
 }: RendererProps & { componentDef: any }) {
+  const dropTarget = useBuilderStore((s) => s.dropTarget);
+
   const direction = (node.props.direction as string) || 'column';
   const padding = (node.props.padding as string) || '0';
   const gap = (node.props.gap as string) || '0';
@@ -322,14 +444,58 @@ function LayoutContainer({
   const gapClass = getGapClass(gap);
   const radiusClass = getBorderRadiusClass(borderRadius);
 
+  // Which sibling-index slot shows the drop indicator inside this container
+  const showIndicatorAt =
+    dropTarget?.parentId === node.id ? dropTarget.index : -1;
+
+  // Drag props for this node itself (as a draggable sibling within its parent)
+  const selfDragProps =
+    isInteractive && parentId !== undefined && indexInParent !== undefined
+      ? {
+          draggable: true as const,
+          onDragStart: (e: React.DragEvent) => startNodeDrag(e, node.id),
+          onDragEnd: endNodeDrag,
+          onDragOver: (e: React.DragEvent) => handleNodeDragOver(e, parentId, indexInParent),
+          onDrop: handleNodeDrop,
+        }
+      : {};
+
+  // When dragging over the container body itself (not a child), append at end
+  const handleContainerBodyDragOver = (e: React.DragEvent) => {
+    const state = useBuilderStore.getState();
+    if (!state.draggedNodeId) return;
+    if (state.draggedNodeId === node.id) return;
+    // check descendant safety
+    const draggedNode = (() => {
+      const find = (n: typeof node): typeof node | null => {
+        if (n.id === state.draggedNodeId) return n;
+        for (const c of n.children) { const f = find(c); if (f) return f; }
+        return null;
+      };
+      return state.rootNode ? find(state.rootNode) : null;
+    })();
+    if (draggedNode && isDescendantOrSelf(node.id, draggedNode)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    state.setDropTarget({ parentId: node.id, index: node.children.length });
+  };
+
   return (
     <div
+      {...selfDragProps}
       onClick={(e) => {
         e.stopPropagation();
         onNodeClick?.(node.id);
       }}
       onMouseEnter={() => onNodeHover?.(node.id)}
       onMouseLeave={() => onNodeHover?.(null)}
+      onDragOver={isInteractive ? (e: React.DragEvent) => {
+        // If a child handled it already (stopPropagation), this won't fire.
+        // This fires only when cursor is over the container's own padding.
+        handleContainerBodyDragOver(e);
+      } : undefined}
+      onDrop={isInteractive ? handleNodeDrop : undefined}
       className={`flex ${flexDirection} ${paddingClass} ${gapClass} ${radiusClass} ${isSelected ? 'ring-2 ring-primary' : isHovered ? 'ring-1 ring-primary/40' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
       style={{
         backgroundColor,
@@ -337,18 +503,33 @@ function LayoutContainer({
         height,
       }}
     >
-      {node.children.map((child) => (
-        <LayoutRenderer
-          key={child.id}
-          node={child}
-          isInteractive={isInteractive}
-          onNodeClick={onNodeClick}
-          selectedNodeId={selectedNodeId}
-          hoverNodeId={hoverNodeId}
-          onNodeHover={onNodeHover}
-          platformComponents={platformComponents}
-        />
+      {node.children.map((child, i) => (
+        <React.Fragment key={child.id}>
+          {showIndicatorAt === i && (
+            <div
+              className="h-0.5 bg-primary rounded-full mx-1 pointer-events-none shrink-0"
+              style={{ zIndex: 50 }}
+            />
+          )}
+          <LayoutRenderer
+            node={child}
+            isInteractive={isInteractive}
+            onNodeClick={onNodeClick}
+            selectedNodeId={selectedNodeId}
+            hoverNodeId={hoverNodeId}
+            onNodeHover={onNodeHover}
+            platformComponents={platformComponents}
+            parentId={node.id}
+            indexInParent={i}
+          />
+        </React.Fragment>
       ))}
+      {showIndicatorAt === node.children.length && (
+        <div
+          className="h-0.5 bg-primary rounded-full mx-1 pointer-events-none shrink-0"
+          style={{ zIndex: 50 }}
+        />
+      )}
     </div>
   );
 }
@@ -362,6 +543,8 @@ function TextComponent({
   selectedNodeId,
   hoverNodeId,
   onNodeHover,
+  parentId,
+  indexInParent,
 }: RendererProps & { componentDef: any }) {
   const getProp = (key: string, defaultVal: any) => {
     if (node.props && node.props[key] !== undefined) return node.props[key];
@@ -396,8 +579,20 @@ function TextComponent({
         }
       : {};
 
+  const dragProps =
+    isInteractive && parentId !== undefined && indexInParent !== undefined
+      ? {
+          draggable: true as const,
+          onDragStart: (e: React.DragEvent) => startNodeDrag(e, node.id),
+          onDragEnd: endNodeDrag,
+          onDragOver: (e: React.DragEvent) => handleNodeDragOver(e, parentId, indexInParent),
+          onDrop: handleNodeDrop,
+        }
+      : {};
+
   return (
     <div
+      {...dragProps}
       onClick={(e) => {
         e.stopPropagation();
         onNodeClick?.(node.id);
@@ -431,6 +626,8 @@ function IconComponent({
   selectedNodeId,
   hoverNodeId,
   onNodeHover,
+  parentId,
+  indexInParent,
 }: RendererProps & { componentDef: any }) {
   const name = (node.props.name as string) || (node.props.icon as string) || 'search';
   const size = (node.props.size as number) || 24;
@@ -438,8 +635,20 @@ function IconComponent({
   const isSelected = selectedNodeId === node.id;
   const isHovered = hoverNodeId === node.id && !isSelected;
 
+  const dragProps =
+    isInteractive && parentId !== undefined && indexInParent !== undefined
+      ? {
+          draggable: true as const,
+          onDragStart: (e: React.DragEvent) => startNodeDrag(e, node.id),
+          onDragEnd: endNodeDrag,
+          onDragOver: (e: React.DragEvent) => handleNodeDragOver(e, parentId, indexInParent),
+          onDrop: handleNodeDrop,
+        }
+      : {};
+
   return (
     <div
+      {...dragProps}
       onClick={(e) => {
         e.stopPropagation();
         onNodeClick?.(node.id);
@@ -465,6 +674,8 @@ function ImageComponent({
   selectedNodeId,
   hoverNodeId,
   onNodeHover,
+  parentId,
+  indexInParent,
 }: RendererProps & { componentDef: any }) {
   const src = (node.props.src as string) || '';
   const alt = (node.props.alt as string) || 'Image';
@@ -475,8 +686,20 @@ function ImageComponent({
   const isSelected = selectedNodeId === node.id;
   const isHovered = hoverNodeId === node.id && !isSelected;
 
+  const dragProps =
+    isInteractive && parentId !== undefined && indexInParent !== undefined
+      ? {
+          draggable: true as const,
+          onDragStart: (e: React.DragEvent) => startNodeDrag(e, node.id),
+          onDragEnd: endNodeDrag,
+          onDragOver: (e: React.DragEvent) => handleNodeDragOver(e, parentId, indexInParent),
+          onDrop: handleNodeDrop,
+        }
+      : {};
+
   return (
     <div
+      {...dragProps}
       onClick={(e) => {
         e.stopPropagation();
         onNodeClick?.(node.id);
@@ -514,6 +737,8 @@ function ButtonComponent({
   selectedNodeId,
   hoverNodeId,
   onNodeHover,
+  parentId,
+  indexInParent,
 }: RendererProps & { componentDef: any }) {
   const getProp = (key: string, defaultVal: any) => {
     if (node.props && node.props[key] !== undefined) return node.props[key];
@@ -553,8 +778,20 @@ function ButtonComponent({
   const shadowIndex = Math.min(Math.floor(elevation / 4), 6);
   const boxShadow = elevationShadows[Math.max(0, shadowIndex)] ?? 'none';
 
+  const dragProps =
+    isInteractive && parentId !== undefined && indexInParent !== undefined
+      ? {
+          draggable: true as const,
+          onDragStart: (e: React.DragEvent) => startNodeDrag(e, node.id),
+          onDragEnd: endNodeDrag,
+          onDragOver: (e: React.DragEvent) => handleNodeDragOver(e, parentId, indexInParent),
+          onDrop: handleNodeDrop,
+        }
+      : {};
+
   return (
     <button
+      {...dragProps}
       onClick={(e) => {
         e.stopPropagation();
         onNodeClick?.(node.id);
@@ -595,6 +832,8 @@ function TextInputComponent({
   selectedNodeId,
   hoverNodeId,
   onNodeHover,
+  parentId,
+  indexInParent,
 }: RendererProps & { componentDef: any }) {
   const placeholder = (node.props.placeholder as string) || 'Enter text...';
   const label = (node.props.label as string) || '';
@@ -605,8 +844,20 @@ function TextInputComponent({
   const isSelected = selectedNodeId === node.id;
   const isHovered = hoverNodeId === node.id && !isSelected;
 
+  const dragProps =
+    isInteractive && parentId !== undefined && indexInParent !== undefined
+      ? {
+          draggable: true as const,
+          onDragStart: (e: React.DragEvent) => startNodeDrag(e, node.id),
+          onDragEnd: endNodeDrag,
+          onDragOver: (e: React.DragEvent) => handleNodeDragOver(e, parentId, indexInParent),
+          onDrop: handleNodeDrop,
+        }
+      : {};
+
   return (
     <div
+      {...dragProps}
       onClick={(e) => {
         e.stopPropagation();
         onNodeClick?.(node.id);
@@ -641,6 +892,8 @@ function TextAreaComponent({
   selectedNodeId,
   hoverNodeId,
   onNodeHover,
+  parentId,
+  indexInParent,
 }: RendererProps & { componentDef: any }) {
   const placeholder = (node.props.placeholder as string) || 'Enter text...';
   const label = (node.props.label as string) || '';
@@ -651,8 +904,20 @@ function TextAreaComponent({
   const isSelected = selectedNodeId === node.id;
   const isHovered = hoverNodeId === node.id && !isSelected;
 
+  const dragProps =
+    isInteractive && parentId !== undefined && indexInParent !== undefined
+      ? {
+          draggable: true as const,
+          onDragStart: (e: React.DragEvent) => startNodeDrag(e, node.id),
+          onDragEnd: endNodeDrag,
+          onDragOver: (e: React.DragEvent) => handleNodeDragOver(e, parentId, indexInParent),
+          onDrop: handleNodeDrop,
+        }
+      : {};
+
   return (
     <div
+      {...dragProps}
       onClick={(e) => {
         e.stopPropagation();
         onNodeClick?.(node.id);
@@ -685,6 +950,8 @@ function DividerComponent({
   selectedNodeId,
   hoverNodeId,
   onNodeHover,
+  parentId,
+  indexInParent,
 }: RendererProps) {
   const getProp = (key: string, defaultVal: any) =>
     node.props && node.props[key] !== undefined ? node.props[key] : defaultVal;
@@ -694,8 +961,21 @@ function DividerComponent({
   const endIndent = Number(getProp('endIndent', 0)) || 0;
   const isSelected = selectedNodeId === node.id;
   const isHovered = hoverNodeId === node.id && !isSelected;
+
+  const dragProps =
+    isInteractive && parentId !== undefined && indexInParent !== undefined
+      ? {
+          draggable: true as const,
+          onDragStart: (e: React.DragEvent) => startNodeDrag(e, node.id),
+          onDragEnd: endNodeDrag,
+          onDragOver: (e: React.DragEvent) => handleNodeDragOver(e, parentId, indexInParent),
+          onDrop: handleNodeDrop,
+        }
+      : {};
+
   return (
     <div
+      {...dragProps}
       onClick={(e) => {
         e.stopPropagation();
         onNodeClick?.(node.id);
@@ -717,6 +997,8 @@ function SpacerComponent({
   selectedNodeId,
   hoverNodeId,
   onNodeHover,
+  parentId,
+  indexInParent,
 }: RendererProps) {
   const getProp = (key: string, defaultVal: any) =>
     node.props && node.props[key] !== undefined ? node.props[key] : defaultVal;
@@ -729,8 +1011,21 @@ function SpacerComponent({
   const style: React.CSSProperties = flex > 0
     ? { flex: flex }
     : { width: width || undefined, height: height || undefined, minWidth: width || undefined, minHeight: height || undefined };
+
+  const dragProps =
+    isInteractive && parentId !== undefined && indexInParent !== undefined
+      ? {
+          draggable: true as const,
+          onDragStart: (e: React.DragEvent) => startNodeDrag(e, node.id),
+          onDragEnd: endNodeDrag,
+          onDragOver: (e: React.DragEvent) => handleNodeDragOver(e, parentId, indexInParent),
+          onDrop: handleNodeDrop,
+        }
+      : {};
+
   return (
     <div
+      {...dragProps}
       onClick={(e) => {
         e.stopPropagation();
         onNodeClick?.(node.id);

@@ -167,6 +167,13 @@ export function Canvas() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
 
+    // Canvas-internal node drag — handled by node onDrop handlers, not here.
+    if (useBuilderStore.getState().draggedNodeId) {
+      useBuilderStore.getState().setDraggedNodeId(null);
+      useBuilderStore.getState().setDropTarget(null);
+      return;
+    }
+
     if (!isDraggingFromLibrary || !draggedComponentType || !rootNode) return;
 
     const componentDef =

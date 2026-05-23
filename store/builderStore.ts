@@ -42,6 +42,13 @@ interface BuilderState {
   draggedComponentType: string | null;
   dropZoneNodeId: string | null;
 
+  // Canvas-internal drag state (node reorder / reparent)
+  draggedNodeId: string | null;
+  setDraggedNodeId: (id: string | null) => void;
+  /** Insertion point during a canvas drag. parentId = container to insert into; index = position in parent.children. */
+  dropTarget: { parentId: string; index: number } | null;
+  setDropTarget: (t: { parentId: string; index: number } | null) => void;
+
   // Actions
   setCurrentLayout: (layout: Layout) => void;
   setRootNode: (node: LayoutNode) => void;
@@ -266,6 +273,8 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   isDraggingFromLibrary: false,
   draggedComponentType: null,
   dropZoneNodeId: null,
+  draggedNodeId: null,
+  dropTarget: null,
   hoverNodeId: null,
 
   // Layout actions
@@ -503,6 +512,14 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
 
   setDropZoneNodeId: (nodeId: string | null) => {
     set({ dropZoneNodeId: nodeId });
+  },
+
+  setDraggedNodeId: (id: string | null) => {
+    set({ draggedNodeId: id });
+  },
+
+  setDropTarget: (t: { parentId: string; index: number } | null) => {
+    set({ dropTarget: t });
   },
 
   setHoverNodeId: (id: string | null) => {
