@@ -42,11 +42,27 @@ export function LayoutRenderer({
   platformComponents = [],
 }: RendererProps) {
   const normalizedType = normalizeComponentType(node.componentType);
-  const builtInDef = getComponentDefinition(normalizedType);
-  const componentDef =
-    builtInDef ??
+
+  // 1. Direct lookup in built-in registry.
+  let builtInDef = getComponentDefinition(normalizedType);
+
+  // 2. Fall back to platform_components (DB). The dragged node may carry the
+  //    DB row's id (a cuid) as componentType, not the human-readable name.
+  const platformDef =
     platformComponents.find((p) => p.id === node.componentType || p.id === normalizedType) ??
-    platformComponents.find((p) => p.name === node.componentType || p.name === normalizedType);
+    platformComponents.find((p) => p.name === node.componentType || p.name === normalizedType) ??
+    null;
+
+  // 3. If the platform component's NAME matches a built-in, prefer the built-in
+  //    renderer. This is what makes a DB-seeded "Text"/"Button"/etc. render as
+  //    a real styled widget instead of the `[Name]` placeholder.
+  if (!builtInDef && platformDef) {
+    builtInDef =
+      getComponentDefinition(platformDef.name) ??
+      getComponentDefinition(normalizeComponentType(platformDef.name));
+  }
+
+  const componentDef = builtInDef ?? platformDef;
 
   if (!componentDef) {
     return (
@@ -56,12 +72,9 @@ export function LayoutRenderer({
     );
   }
 
-  // Platform (DB) components: render as generic block — but only if there's no
-  // built-in renderer. Built-ins always win so DB seeds can't shadow them with
-  // a square-bracketed `[Button]` placeholder.
-  const isPlatformComponent = !builtInDef && platformComponents.some(
-    (p) => p.id === node.componentType || p.name === node.componentType || p.id === normalizedType || p.name === normalizedType
-  );
+  // Render as PlatformComponentBlock only when the resolved component has NO
+  // built-in renderer at all — i.e. it's a genuinely custom DB widget.
+  const isPlatformComponent = !builtInDef && !!platformDef;
   if (isPlatformComponent) {
     return (
       <PlatformComponentBlock
@@ -75,13 +88,26 @@ export function LayoutRenderer({
     );
   }
 
-  // Handle different component types (use normalized type so "scaffold" -> "Scaffold")
-  switch (normalizedType) {
+  // Use the resolved built-in's canonical id when available so DB-name lookup
+  // (e.g. a DB Text seeded with a cuid for componentType) still routes to the
+  // right renderer case.
+  const renderType = builtInDef?.id ?? normalizedType;
+
+  switch (renderType) {
     case 'Container':
     case 'VStack':
     case 'HStack':
+    case 'Column':
+    case 'Row':
     case 'Scaffold':
     case 'AppBar':
+    case 'Padding':
+    case 'Center':
+    case 'Expanded':
+    case 'SingleChildScrollView':
+    case 'Card':
+    case 'ListView':
+    case 'GridView':
       return (
         <LayoutContainer
           node={node}
@@ -116,6 +142,11 @@ export function LayoutRenderer({
       );
 
     case 'Button':
+    case 'TextButton':
+    case 'FilledButton':
+    case 'OutlinedButton':
+    case 'IconButton':
+    case 'FloatingActionButton':
       return (
         <ButtonComponent
           node={node}
@@ -138,6 +169,7 @@ export function LayoutRenderer({
       );
 
     case 'TextInput':
+    case 'TextField':
       return (
         <TextInputComponent
           node={node}
@@ -153,6 +185,27 @@ export function LayoutRenderer({
         <TextAreaComponent
           node={node}
           componentDef={componentDef}
+          isInteractive={isInteractive}
+          onNodeClick={onNodeClick}
+          selectedNodeId={selectedNodeId}
+        />
+      );
+
+    case 'Divider':
+      return (
+        <DividerComponent
+          node={node}
+          isInteractive={isInteractive}
+          onNodeClick={onNodeClick}
+          selectedNodeId={selectedNodeId}
+        />
+      );
+
+    case 'Spacer':
+    case 'SizedBox':
+      return (
+        <SpacerComponent
+          node={node}
           isInteractive={isInteractive}
           onNodeClick={onNodeClick}
           selectedNodeId={selectedNodeId}
@@ -556,6 +609,62 @@ function TextAreaComponent({
         onClick={(e) => e.stopPropagation()}
       />
     </div>
+  );
+}
+
+function DividerComponent({
+  node,
+  isInteractive,
+  onNodeClick,
+  selectedNodeId,
+}: RendererProps) {
+  const getProp = (key: string, defaultVal: any) =>
+    node.props && node.props[key] !== undefined ? node.props[key] : defaultVal;
+  const color = (getProp('color', '#E5E7EB') as string) || '#E5E7EB';
+  const thickness = Number(getProp('thickness', 1)) || 1;
+  const indent = Number(getProp('indent', 0)) || 0;
+  const endIndent = Number(getProp('endIndent', 0)) || 0;
+  const isSelected = selectedNodeId === node.id;
+  return (
+    <div
+      onClick={(e) => {
+        e.stopPropagation();
+        onNodeClick?.(node.id);
+      }}
+      className={`w-full ${isSelected ? 'ring-2 ring-primary rounded' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
+      style={{ marginLeft: indent, marginRight: endIndent, paddingTop: 4, paddingBottom: 4 }}
+    >
+      <div style={{ height: thickness, backgroundColor: color, width: '100%' }} />
+    </div>
+  );
+}
+
+function SpacerComponent({
+  node,
+  isInteractive,
+  onNodeClick,
+  selectedNodeId,
+}: RendererProps) {
+  const getProp = (key: string, defaultVal: any) =>
+    node.props && node.props[key] !== undefined ? node.props[key] : defaultVal;
+  const width = Number(getProp('width', 0)) || 0;
+  const height = Number(getProp('height', 0)) || 0;
+  const flex = Number(getProp('flex', 0)) || 0;
+  const isSelected = selectedNodeId === node.id;
+  // Spacer (flex > 0) takes up flex space; SizedBox uses width/height
+  const style: React.CSSProperties = flex > 0
+    ? { flex: flex }
+    : { width: width || undefined, height: height || undefined, minWidth: width || undefined, minHeight: height || undefined };
+  return (
+    <div
+      onClick={(e) => {
+        e.stopPropagation();
+        onNodeClick?.(node.id);
+      }}
+      className={`${isSelected ? 'ring-2 ring-primary' : ''} ${isInteractive ? 'cursor-pointer' : ''}`}
+      style={style}
+      title={node.componentType}
+    />
   );
 }
 
