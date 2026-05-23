@@ -114,6 +114,35 @@ export function EditorLayout({
           e.preventDefault();
           (state as any).duplicateNode(selectedId);
         }
+      } else if (e.key === 'c') {
+        // Cmd/Ctrl+C — copy selected node
+        const state = useBuilderStore.getState();
+        const selectedId = state.selection.selectedNodeId;
+        const rootId = state.rootNode?.id;
+        const isScreenContainer = state.rootNode?.children?.[0]?.id === selectedId;
+        if (selectedId && selectedId !== rootId && !isScreenContainer) {
+          e.preventDefault();
+          state.copyNode(selectedId);
+        }
+      } else if (e.key === 'x') {
+        // Cmd/Ctrl+X — cut
+        const state = useBuilderStore.getState();
+        const selectedId = state.selection.selectedNodeId;
+        const rootId = state.rootNode?.id;
+        const isScreenContainer = state.rootNode?.children?.[0]?.id === selectedId;
+        if (selectedId && selectedId !== rootId && !isScreenContainer) {
+          e.preventDefault();
+          state.cutNode(selectedId);
+        }
+      } else if (e.key === 'v') {
+        // Cmd/Ctrl+V — paste clipboard into selected container (or root)
+        const state = useBuilderStore.getState();
+        if (state.clipboardNode) {
+          e.preventDefault();
+          // If selected is a container-like node, paste into it; otherwise paste as sibling
+          const selectedId = state.selection.selectedNodeId;
+          state.pasteNode(selectedId ?? undefined);
+        }
       }
     };
     window.addEventListener('keydown', handler);
