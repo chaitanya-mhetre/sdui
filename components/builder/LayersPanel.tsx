@@ -25,6 +25,8 @@ import {
   AlignJustify,
   MoreHorizontal,
   GripVertical,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -91,6 +93,8 @@ function TreeNode({ node, depth, selectedNodeId, onSelect, onDelete, isRoot }: T
   const hasChildren = node.children.length > 0;
   const isSelected = node.id === selectedNodeId;
   const Icon = getNodeIcon(node.componentType);
+  const isHidden = Boolean(node.props.__hidden);
+  const setNodeHidden = useBuilderStore((s) => s.setNodeHidden);
 
   const {
     attributes,
@@ -172,7 +176,24 @@ function TreeNode({ node, depth, selectedNodeId, onSelect, onDelete, isRoot }: T
         />
 
         {/* label */}
-        <span className="flex-1 truncate font-medium">{node.componentType}</span>
+        <span className={`flex-1 truncate font-medium ${isHidden ? 'opacity-50 italic' : ''}`}>{node.componentType}</span>
+
+        {/* eye / eye-off toggle (hidden unless hovered or node is hidden; root node cannot be toggled) */}
+        {!isRoot && (
+          <button
+            type="button"
+            className={`${isHidden ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} p-0.5 rounded hover:bg-muted transition-opacity mr-1`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setNodeHidden(node.id, !isHidden);
+            }}
+            tabIndex={-1}
+            aria-label={isHidden ? `Show ${node.componentType}` : `Hide ${node.componentType}`}
+            title={isHidden ? 'Show' : 'Hide'}
+          >
+            {isHidden ? <EyeOff className="w-3 h-3 text-muted-foreground" /> : <Eye className="w-3 h-3" />}
+          </button>
+        )}
 
         {/* delete (hidden unless hovered; root node cannot be deleted) */}
         {!isRoot && (

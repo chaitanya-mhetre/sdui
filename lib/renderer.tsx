@@ -127,6 +127,12 @@ export function LayoutRenderer({
 }: RendererProps) {
   const normalizedType = normalizeComponentType(node.componentType);
 
+  // Hidden nodes are tracked in the tree (so layers panel can toggle them
+  // back) but skipped during rendering.
+  if (node.props?.__hidden === true) {
+    return null;
+  }
+
   // 1. Direct lookup in built-in registry.
   let builtInDef = getComponentDefinition(normalizedType);
 
