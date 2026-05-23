@@ -30,6 +30,22 @@ export interface PropertySchema {
   step?: number;
 }
 
+// ─── Child arity types ────────────────────────────────────────────────────────
+
+export interface SlotSpec {
+  /** Slot name, e.g. 'body' | 'appBar' | 'leading' | 'title' | 'actions' */
+  name: string;
+  required?: boolean;
+  mode: 'single' | 'multi';
+  allowedTypes?: string[];
+}
+
+export type ChildrenSpec =
+  | { mode: 'none' }
+  | { mode: 'single' }
+  | { mode: 'multi'; allowedTypes?: string[] }
+  | { mode: 'slots'; slots: SlotSpec[] };
+
 // Component definition in the registry
 export interface ComponentDefinition {
   id: string;
@@ -41,6 +57,11 @@ export interface ComponentDefinition {
   defaultProps?: Record<string, unknown>;
   supportedChildren?: string[]; // Component types that can be children
   allowChildren?: boolean;
+  /**
+   * Explicit child arity. Overrides the legacy `allowChildren` boolean.
+   * When absent, derive default from allowChildren: true → {mode:'multi'}, false → {mode:'none'}.
+   */
+  children?: ChildrenSpec;
 }
 
 // Layout node represents a component instance in the layout tree

@@ -110,6 +110,16 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'LayoutTemplate',
     description: 'Root screen container (Material Design). Use once per screen.',
     allowChildren: true,
+    children: {
+      mode: 'slots',
+      slots: [
+        { name: 'appBar', mode: 'single' },
+        { name: 'body', mode: 'single', required: true },
+        { name: 'drawer', mode: 'single' },
+        { name: 'floatingActionButton', mode: 'single' },
+        { name: 'bottomNavigationBar', mode: 'single' },
+      ],
+    },
     properties: [
       { name: 'backgroundColor', type: 'color', label: 'Background Color', default: '#F5F5F5', category: 'appearance' },
       { name: 'extendBodyBehindAppBar', type: 'boolean', label: 'Extend behind AppBar', default: false, category: 'behavior' },
@@ -126,6 +136,14 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'PanelTop',
     description: 'Material top app bar with title and actions.',
     allowChildren: true,
+    children: {
+      mode: 'slots',
+      slots: [
+        { name: 'leading', mode: 'single' },
+        { name: 'title', mode: 'single' },
+        { name: 'actions', mode: 'multi', allowedTypes: ['IconButton', 'Icon', 'Button'] },
+      ],
+    },
     properties: [
       { name: 'title', type: 'string', label: 'Title Text', default: 'Screen Title', category: 'content' },
       { name: 'backgroundColor', type: 'color', label: 'Background Color', default: '#6366F1', category: 'appearance' },
@@ -144,6 +162,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'Square',
     description: 'Flexible box with color, size, padding, border radius and elevation.',
     allowChildren: true,
+    children: { mode: 'single' },
     properties: [
       { name: 'color', type: 'color', label: 'Background Color', default: '', category: 'appearance' },
       { name: 'opacity', type: 'slider', label: 'Opacity', default: 1, min: 0, max: 1, step: 0.01, category: 'appearance' },
@@ -166,6 +185,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'AlignCenterVertical',
     description: 'Vertical list of children.',
     allowChildren: true,
+    children: { mode: 'multi' },
     properties: [
       { name: 'mainAxisAlignment', type: 'select', label: 'Main Axis Alignment', default: 'start', options: MAIN_AXIS_ALIGNMENT, category: 'layout' },
       { name: 'crossAxisAlignment', type: 'select', label: 'Cross Axis Alignment', default: 'stretch', options: CROSS_AXIS_ALIGNMENT, category: 'layout' },
@@ -184,6 +204,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'AlignCenterHorizontal',
     description: 'Horizontal list of children.',
     allowChildren: true,
+    children: { mode: 'multi' },
     properties: [
       { name: 'mainAxisAlignment', type: 'select', label: 'Main Axis Alignment', default: 'start', options: MAIN_AXIS_ALIGNMENT, category: 'layout' },
       { name: 'crossAxisAlignment', type: 'select', label: 'Cross Axis Alignment', default: 'center', options: CROSS_AXIS_ALIGNMENT, category: 'layout' },
@@ -202,6 +223,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'SquareDashed',
     description: 'Adds padding around a single child.',
     allowChildren: true,
+    children: { mode: 'single' },
     properties: [
       { name: 'padding', type: 'spacing', label: 'Padding', default: 16, category: 'layout' },
     ],
@@ -216,6 +238,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'Crosshair',
     description: 'Centers a single child within itself.',
     allowChildren: true,
+    children: { mode: 'single' },
     properties: [
       { name: 'widthFactor', type: 'number', label: 'Width Factor (0 = fill)', default: 0, min: 0, step: 0.1, category: 'layout' },
       { name: 'heightFactor', type: 'number', label: 'Height Factor (0 = fill)', default: 0, min: 0, step: 0.1, category: 'layout' },
@@ -231,6 +254,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'Maximize2',
     description: 'Expands a child to fill available space.',
     allowChildren: true,
+    children: { mode: 'single' },
     properties: [
       { name: 'flex', type: 'number', label: 'Flex Factor', default: 1, min: 1, max: 12, category: 'layout' },
     ],
@@ -245,6 +269,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'Space',
     description: 'Flexible space between widgets.',
     allowChildren: false,
+    children: { mode: 'none' },
     properties: [
       { name: 'flex', type: 'number', label: 'Flex Factor', default: 1, min: 1, max: 12, category: 'layout' },
     ],
@@ -259,6 +284,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'RectangleHorizontal',
     description: 'Fixed-size box; use for spacing or constraining a child.',
     allowChildren: true,
+    children: { mode: 'none' },
     properties: [
       { name: 'width', type: 'number', label: 'Width (px)', default: 0, min: 0, category: 'layout' },
       { name: 'height', type: 'number', label: 'Height (px)', default: 0, min: 0, category: 'layout' },
@@ -274,6 +300,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'ScrollText',
     description: 'Scrollable container for a single child.',
     allowChildren: true,
+    children: { mode: 'single' },
     properties: [
       { name: 'scrollDirection', type: 'select', label: 'Scroll Direction', default: 'vertical', options: SCROLL_DIRECTION, category: 'behavior' },
       { name: 'padding', type: 'spacing', label: 'Inner Padding', default: 0, category: 'layout' },
@@ -290,6 +317,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'Type',
     description: 'Renders text with full typography control.',
     allowChildren: false,
+    children: { mode: 'none' },
     properties: [
       { name: 'data', type: 'textarea', label: 'Text Content', default: 'Hello World', category: 'content' },
       { name: 'color', type: 'color', label: 'Color', default: '#000000', category: 'appearance' },
@@ -315,6 +343,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'Smile',
     description: 'Material Design icon.',
     allowChildren: false,
+    children: { mode: 'none' },
     properties: [
       { name: 'name', type: 'icon', label: 'Icon', default: 'search', category: 'content' },
       { name: 'size', type: 'slider', label: 'Size', default: 24, min: 8, max: 96, step: 1, category: 'appearance' },
@@ -331,6 +360,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'ImageIcon',
     description: 'Network or asset image.',
     allowChildren: false,
+    children: { mode: 'none' },
     properties: [
       { name: 'url', type: 'image', label: 'Image URL', default: '', category: 'content' },
       { name: 'fit', type: 'select', label: 'Fit Mode', default: 'cover', options: IMAGE_FIT_OPTIONS, category: 'appearance' },
@@ -349,6 +379,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'Minus',
     description: 'Horizontal separator line.',
     allowChildren: false,
+    children: { mode: 'none' },
     properties: [
       { name: 'color', type: 'color', label: 'Color', default: '#E0E0E0', category: 'appearance' },
       { name: 'thickness', type: 'number', label: 'Thickness (px)', default: 1, min: 0.5, max: 20, step: 0.5, category: 'appearance' },
@@ -367,6 +398,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'CreditCard',
     description: 'Material card with elevation and rounded corners.',
     allowChildren: true,
+    children: { mode: 'single' },
     properties: [
       { name: 'backgroundColor', type: 'color', label: 'Background Color', default: '#FFFFFF', category: 'appearance' },
       { name: 'elevation', type: 'slider', label: 'Elevation (Shadow)', default: 2, min: 0, max: 24, step: 1, category: 'appearance' },
@@ -385,6 +417,15 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'List',
     description: 'Material list tile with leading, title, subtitle, and trailing.',
     allowChildren: false,
+    children: {
+      mode: 'slots',
+      slots: [
+        { name: 'leading', mode: 'single' },
+        { name: 'title', mode: 'single' },
+        { name: 'subtitle', mode: 'single' },
+        { name: 'trailing', mode: 'single' },
+      ],
+    },
     properties: [
       { name: 'title', type: 'string', label: 'Title', default: 'Title', category: 'content' },
       { name: 'subtitle', type: 'string', label: 'Subtitle', default: '', category: 'content' },
@@ -406,6 +447,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'ListOrdered',
     description: 'Scrollable list of widgets.',
     allowChildren: true,
+    children: { mode: 'multi' },
     properties: [
       { name: 'scrollDirection', type: 'select', label: 'Scroll Direction', default: 'vertical', options: SCROLL_DIRECTION, category: 'behavior' },
       { name: 'padding', type: 'spacing', label: 'Padding', default: 0, category: 'layout' },
@@ -425,6 +467,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'LayoutGrid',
     description: 'Scrollable grid of widgets.',
     allowChildren: true,
+    children: { mode: 'multi' },
     properties: [
       { name: 'crossAxisCount', type: 'number', label: 'Columns', default: 2, min: 1, max: 10, category: 'layout' },
       { name: 'mainAxisSpacing', type: 'number', label: 'Row Spacing', default: 8, min: 0, max: 100, category: 'layout' },
@@ -446,6 +489,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'RectangleEllipsis',
     description: 'Elevated Material button.',
     allowChildren: false,
+    children: { mode: 'single' },
     properties: [
       { name: 'label', type: 'string', label: 'Label Text', default: 'Button', category: 'content' },
       { name: 'backgroundColor', type: 'color', label: 'Background Color', default: '#6366F1', category: 'appearance' },
@@ -470,6 +514,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'AlignJustify',
     description: 'Flat text button with no elevation.',
     allowChildren: false,
+    children: { mode: 'single' },
     properties: [
       { name: 'label', type: 'string', label: 'Label Text', default: 'Cancel', category: 'content' },
       { name: 'color', type: 'color', label: 'Text Color', default: '#6366F1', category: 'appearance' },
@@ -491,6 +536,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'SquareDashed',
     description: 'Button with a visible border and no fill.',
     allowChildren: false,
+    children: { mode: 'single' },
     properties: [
       { name: 'label', type: 'string', label: 'Label Text', default: 'Outlined', category: 'content' },
       { name: 'color', type: 'color', label: 'Text Color', default: '#6366F1', category: 'appearance' },
@@ -514,6 +560,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'CircleDot',
     description: 'Tappable icon button.',
     allowChildren: false,
+    children: { mode: 'single' },
     properties: [
       { name: 'name', type: 'icon', label: 'Icon', default: 'search', category: 'content' },
       { name: 'tooltip', type: 'string', label: 'Tooltip', default: '', category: 'content' },
@@ -532,6 +579,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'PlusCircle',
     description: 'Floating action button.',
     allowChildren: false,
+    children: { mode: 'single' },
     properties: [
       { name: 'name', type: 'icon', label: 'Icon', default: 'add', category: 'content' },
       { name: 'tooltip', type: 'string', label: 'Tooltip', default: '', category: 'content' },
@@ -551,6 +599,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'Tag',
     description: 'Icon + label category chip.',
     allowChildren: false,
+    children: { mode: 'none' },
     properties: [
       { name: 'label', type: 'string', label: 'Label', default: 'Category', category: 'content' },
       { name: 'name', type: 'icon', label: 'Icon', default: 'star', category: 'content' },
@@ -571,6 +620,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'AlignCenterHorizontal',
     description: 'Horizontal stack (alias for Row).',
     allowChildren: true,
+    children: { mode: 'multi' },
     properties: [
       { name: 'mainAxisAlignment', type: 'select', label: 'Main Axis Alignment', default: 'start', options: MAIN_AXIS_ALIGNMENT, category: 'layout' },
       { name: 'crossAxisAlignment', type: 'select', label: 'Cross Axis Alignment', default: 'center', options: CROSS_AXIS_ALIGNMENT, category: 'layout' },
@@ -589,6 +639,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'AlignCenterVertical',
     description: 'Vertical stack (alias for Column).',
     allowChildren: true,
+    children: { mode: 'multi' },
     properties: [
       { name: 'mainAxisAlignment', type: 'select', label: 'Main Axis Alignment', default: 'start', options: MAIN_AXIS_ALIGNMENT, category: 'layout' },
       { name: 'crossAxisAlignment', type: 'select', label: 'Cross Axis Alignment', default: 'stretch', options: CROSS_AXIS_ALIGNMENT, category: 'layout' },
@@ -607,6 +658,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'TextCursorInput',
     description: 'Single-line text input field.',
     allowChildren: false,
+    children: { mode: 'none' },
     properties: [
       { name: 'placeholder', type: 'string', label: 'Placeholder', default: 'Enter text…', category: 'content' },
       { name: 'label', type: 'string', label: 'Label', default: '', category: 'content' },
@@ -632,6 +684,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'FileText',
     description: 'Multi-line text input.',
     allowChildren: false,
+    children: { mode: 'none' },
     properties: [
       { name: 'placeholder', type: 'string', label: 'Placeholder', default: 'Enter text…', category: 'content' },
       { name: 'label', type: 'string', label: 'Label', default: '', category: 'content' },
@@ -654,6 +707,7 @@ const componentRegistry: Record<string, ComponentDefinition> = {
     icon: 'NavigationIcon',
     description: 'Material bottom / top navigation bar.',
     allowChildren: false,
+    children: { mode: 'none' },
     properties: [
       { name: 'backgroundColor', type: 'color', label: 'Background Color', default: '#FFFFFF', category: 'appearance' },
       { name: 'selectedColor', type: 'color', label: 'Selected Item Color', default: '#6366F1', category: 'appearance' },
