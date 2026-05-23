@@ -7,6 +7,9 @@ interface BuilderState {
   currentLayout: Layout | null;
   rootNode: LayoutNode | null;
 
+  // Clipboard
+  clipboardNode: LayoutNode | null;
+
   // Selection state
   selection: SelectionState;
 
@@ -49,6 +52,11 @@ interface BuilderState {
   addChildNode: (parentId: string, childNode: LayoutNode) => void;
   insertNodeAfter: (referenceId: string, newNode: LayoutNode) => void;
   moveNode: (nodeId: string, newParentId: string, position?: number) => void;
+  duplicateNode: (nodeId: string) => void;
+  copyNode: (nodeId: string) => void;
+  cutNode: (nodeId: string) => void;
+  pasteNode: (parentId?: string) => void;
+  setNodeHidden: (nodeId: string, hidden: boolean) => void;
 
   // Preview and device
   setPreviewMode: (enabled: boolean) => void;
@@ -147,6 +155,40 @@ function addChildToNode(parentId: string, child: LayoutNode, rootNode: LayoutNod
   };
 }
 
+// Helper: deep clone a node with fresh ids for all nodes
+function cloneNodeDeep(node: LayoutNode): LayoutNode {
+  return {
+    ...node,
+    id: nanoid(),
+    props: { ...node.props },
+    children: node.children.map(cloneNodeDeep),
+  };
+}
+
+// Helper: find a node and its direct parent
+function findNodeAndParent(
+  root: LayoutNode,
+  targetId: string,
+  parent: LayoutNode | null = null
+): { node: LayoutNode; parent: LayoutNode | null } | null {
+  if (root.id === targetId) return { node: root, parent };
+  for (const child of root.children) {
+    const found = findNodeAndParent(child, targetId, root);
+    if (found) return found;
+  }
+  return null;
+}
+
+// Helper: apply a mutator to a single node in the tree (immutably)
+function setNodePropInTree(
+  root: LayoutNode,
+  targetId: string,
+  mutator: (n: LayoutNode) => LayoutNode
+): LayoutNode {
+  if (root.id === targetId) return mutator(root);
+  return { ...root, children: root.children.map((c) => setNodePropInTree(c, targetId, mutator)) };
+}
+
 // Helper function to move a node
 function moveNodeInTree(
   nodeId: string,
@@ -201,6 +243,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   // Initial state
   currentLayout: null,
   rootNode: null,
+  clipboardNode: null,
   selection: {
     selectedNodeId: null,
     selectedNodes: [],
@@ -313,9 +356,102 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   moveNode: (nodeId: string, newParentId: string, position?: number) => {
     set((state) => {
       if (!state.rootNode) return state;
-      return {
-        rootNode: moveNodeInTree(nodeId, newParentId, position, state.rootNode),
+      if (nodeId === newParentId) return state; // can't parent to self
+      const found = findNodeAndParent(state.rootNode, nodeId);
+      if (!found) return state;
+      const sameParent = found.parent?.id === newParentId;
+      // 1. remove from current location
+      let nextTree = deleteNodeFromTree(nodeId, state.rootNode);
+      // 2. insert into new parent at index (or append)
+      // When moving within the same parent, the removal shifts indices by -1
+      // for positions after the removed item, so adjust the target index.
+      const insert = (root: LayoutNode): LayoutNode => {
+        if (root.id === newParentId) {
+          const children = [...root.children];
+          let at: number;
+          if (typeof position === 'number') {
+            let adjusted = position;
+            if (sameParent && found.parent) {
+              const origIdx = found.parent.children.findIndex((c) => c.id === nodeId);
+              if (origIdx < position) adjusted = position - 1;
+            }
+            at = Math.max(0, Math.min(adjusted, children.length));
+          } else {
+            at = children.length;
+          }
+          children.splice(at, 0, found.node);
+          return { ...root, children };
+        }
+        return { ...root, children: root.children.map(insert) };
       };
+      nextTree = insert(nextTree);
+      return { rootNode: nextTree };
+    });
+  },
+
+  duplicateNode: (nodeId: string) => {
+    set((state) => {
+      if (!state.rootNode) return state;
+      const found = findNodeAndParent(state.rootNode, nodeId);
+      if (!found || !found.parent) return state;
+      const clone = cloneNodeDeep(found.node);
+      const insert = (root: LayoutNode): LayoutNode => {
+        if (root.id === found.parent!.id) {
+          const idx = root.children.findIndex((c) => c.id === nodeId);
+          const children = [...root.children];
+          children.splice(idx + 1, 0, clone);
+          return { ...root, children };
+        }
+        return { ...root, children: root.children.map(insert) };
+      };
+      return {
+        rootNode: insert(state.rootNode),
+        selection: { ...state.selection, selectedNodeId: clone.id, selectedNodes: [clone.id] },
+      };
+    });
+  },
+
+  copyNode: (nodeId: string) => {
+    set((state) => {
+      if (!state.rootNode) return state;
+      const found = findNodeAndParent(state.rootNode, nodeId);
+      if (!found) return state;
+      return { clipboardNode: cloneNodeDeep(found.node) };
+    });
+  },
+
+  cutNode: (nodeId: string) => {
+    const state = get();
+    state.copyNode(nodeId);
+    state.deleteNode(nodeId);
+  },
+
+  pasteNode: (parentId?: string) => {
+    set((state) => {
+      if (!state.rootNode || !state.clipboardNode) return state;
+      const target = parentId ?? state.selection.selectedNodeId ?? state.rootNode.id;
+      const fresh = cloneNodeDeep(state.clipboardNode);
+      const insert = (root: LayoutNode): LayoutNode => {
+        if (root.id === target) {
+          return { ...root, children: [...root.children, fresh] };
+        }
+        return { ...root, children: root.children.map(insert) };
+      };
+      return {
+        rootNode: insert(state.rootNode),
+        selection: { ...state.selection, selectedNodeId: fresh.id, selectedNodes: [fresh.id] },
+      };
+    });
+  },
+
+  setNodeHidden: (nodeId: string, hidden: boolean) => {
+    set((state) => {
+      if (!state.rootNode) return state;
+      const nextTree = setNodePropInTree(state.rootNode, nodeId, (n) => ({
+        ...n,
+        props: { ...n.props, __hidden: hidden },
+      }));
+      return { rootNode: nextTree };
     });
   },
 
