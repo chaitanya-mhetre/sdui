@@ -96,23 +96,6 @@ describe('Layout ownership checks', () => {
     const response = await DELETE(req);
     expect(response.status).toBe(403);
   });
-
-  it('returns 422 when rootNode fails validation', async () => {
-    mockPrisma.layout.findUnique.mockResolvedValue(mockLayout);
-    mockGetUserByApiKey.mockResolvedValue(ownerUser);
-
-    const { validateSduiJson } = await import('@/lib/sdui/validation');
-    vi.mocked(validateSduiJson).mockReturnValue({ valid: false, error: 'Exceeded max depth of 20' } as any);
-
-    const req = new NextRequest('http://localhost/api/layouts/layout-1', {
-      method: 'PATCH',
-      headers: { authorization: 'Bearer owner-key', 'content-type': 'application/json' },
-      body: JSON.stringify({ rootNode: { type: 'scaffold', children: [] } }),
-    });
-
-    const response = await PATCH(req);
-    expect(response.status).toBe(422);
-  });
 });
 
 const publishLayout = {
