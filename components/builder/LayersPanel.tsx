@@ -24,8 +24,22 @@ import {
   Maximize2,
   AlignJustify,
   MoreHorizontal,
+  GripVertical,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Icon mapping for component types
 function getNodeIcon(componentType: string) {
@@ -50,6 +64,19 @@ function getNodeIcon(componentType: string) {
   return Square;
 }
 
+// Helper: find the parent and index of a node in the tree.
+function findParentAndIndex(
+  root: LayoutNode,
+  id: string
+): { parentId: string; index: number } | null {
+  for (let i = 0; i < root.children.length; i++) {
+    if (root.children[i].id === id) return { parentId: root.id, index: i };
+    const found = findParentAndIndex(root.children[i], id);
+    if (found) return found;
+  }
+  return null;
+}
+
 interface TreeNodeProps {
   node: LayoutNode;
   depth: number;
@@ -65,8 +92,23 @@ function TreeNode({ node, depth, selectedNodeId, onSelect, onDelete, isRoot }: T
   const isSelected = node.id === selectedNodeId;
   const Icon = getNodeIcon(node.componentType);
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: node.id });
+
+  const sortableStyle: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   return (
-    <div>
+    <div ref={setNodeRef} style={sortableStyle}>
       <div
         role="button"
         tabIndex={0}
@@ -84,6 +126,21 @@ function TreeNode({ node, depth, selectedNodeId, onSelect, onDelete, isRoot }: T
           if (e.key === 'Enter' || e.key === ' ') onSelect(node.id);
         }}
       >
+        {/* drag handle — hidden until row hover, not shown on root */}
+        {!isRoot && (
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing p-0.5 rounded shrink-0"
+            tabIndex={-1}
+            aria-label="Drag to reorder"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical className="w-3 h-3 text-muted-foreground" />
+          </button>
+        )}
+
         {/* expand/collapse toggle */}
         <button
           type="button"
@@ -153,11 +210,58 @@ function TreeNode({ node, depth, selectedNodeId, onSelect, onDelete, isRoot }: T
   );
 }
 
+// Build a flat list of all visible node ids (respects expand state via TreeNode).
+// We need this for the SortableContext items list.
+function flattenVisibleIds(node: LayoutNode, expandedSet?: Set<string>): string[] {
+  // Without access to individual TreeNode expand state, we flatten all ids.
+  // The SortableContext items list just needs all draggable ids registered.
+  const ids: string[] = [node.id];
+  for (const child of node.children) {
+    ids.push(...flattenVisibleIds(child, expandedSet));
+  }
+  return ids;
+}
+
 export function LayersPanel() {
   const rootNode = useBuilderStore((state) => state.rootNode);
   const selectedNodeId = useBuilderStore((state) => state.selection.selectedNodeId);
   const selectNode = useBuilderStore((state) => state.selectNode);
   const deleteNode = useBuilderStore((state) => state.deleteNode);
+  const moveNode = useBuilderStore((state) => state.moveNode);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        // Require 8px movement before drag starts — avoids accidental drags on clicks.
+        distance: 8,
+      },
+    })
+  );
+
+  const handleDragEnd = useCallback(
+    (e: DragEndEvent) => {
+      const { active, over } = e;
+      if (!over || active.id === over.id) return;
+      if (!rootNode) return;
+
+      const draggedId = active.id as string;
+      const overId = over.id as string;
+
+      const draggedInfo = findParentAndIndex(rootNode, draggedId);
+      const overInfo = findParentAndIndex(rootNode, overId);
+
+      if (!draggedInfo || !overInfo) return;
+
+      // v1: only support reorder within the same parent.
+      if (draggedInfo.parentId !== overInfo.parentId) {
+        return; // cross-parent reparenting not supported in v1
+      }
+
+      // Move to the target index (store handles same-parent index adjustment).
+      moveNode(draggedId, draggedInfo.parentId, overInfo.index);
+    },
+    [rootNode, moveNode]
+  );
 
   const handleSelect = useCallback(
     (id: string) => {
@@ -180,6 +284,7 @@ export function LayersPanel() {
   }
 
   const nodeCount = countNodes(rootNode);
+  const allIds = flattenVisibleIds(rootNode);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -190,14 +295,18 @@ export function LayersPanel() {
         <span className="text-xs text-muted-foreground">{nodeCount} nodes</span>
       </div>
       <div className="flex-1 overflow-y-auto py-1 px-1">
-        <TreeNode
-          node={rootNode}
-          depth={0}
-          selectedNodeId={selectedNodeId}
-          onSelect={handleSelect}
-          onDelete={handleDelete}
-          isRoot
-        />
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+          <SortableContext items={allIds} strategy={verticalListSortingStrategy}>
+            <TreeNode
+              node={rootNode}
+              depth={0}
+              selectedNodeId={selectedNodeId}
+              onSelect={handleSelect}
+              onDelete={handleDelete}
+              isRoot
+            />
+          </SortableContext>
+        </DndContext>
       </div>
     </div>
   );
