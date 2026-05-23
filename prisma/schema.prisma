@@ -159,6 +159,7 @@ model LayoutVersion {
   layoutId    String
   projectId   String
   screenName  String?
+  layoutKind  String    @default("full")  // "full" | "embed"
   version     Int
   sduiJson    Json      // Immutable SDUI JSON snapshot
   publishedAt DateTime  @default(now())
