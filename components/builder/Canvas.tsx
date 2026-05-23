@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useBuilderStore } from '@/store/builderStore';
 import { LayoutRenderer } from '@/lib/renderer';
 import { getComponentDefinition } from '@/lib/componentRegistry';
@@ -18,6 +18,10 @@ import { validateDrop } from '@/lib/flutterRules';
 
 export function Canvas() {
   const [zoom, setZoom] = useState(0.8);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isSpaceDown, setIsSpaceDown] = useState(false);
+  const [isPanning, setIsPanning] = useState(false);
+  const panStartRef = useRef<{ x: number; y: number; offX: number; offY: number } | null>(null);
   
   const rootNode = useBuilderStore((state) => state.rootNode);
   const selectedNodeId = useBuilderStore((state) => state.selection.selectedNodeId);
@@ -59,6 +63,53 @@ export function Canvas() {
     return () => ro.disconnect();
   }, []);
 
+  // Mouse-wheel zoom — attach as non-passive native listener so preventDefault works
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = -e.deltaY * 0.001;
+      setZoom((z) => Math.max(0.2, Math.min(3, z + delta)));
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+
+  // Space key: show grab cursor and enable drag-to-pan
+  useEffect(() => {
+    const isEditable = (target: EventTarget | null): boolean => {
+      const el = target as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName?.toLowerCase();
+      return (
+        tag === 'input' ||
+        tag === 'textarea' ||
+        el.isContentEditable ||
+        !!el.closest?.('.monaco-editor')
+      );
+    };
+    const down = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !isEditable(e.target)) {
+        if (!isSpaceDown) setIsSpaceDown(true);
+        e.preventDefault();
+      }
+    };
+    const up = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setIsSpaceDown(false);
+        setIsPanning(false);
+        panStartRef.current = null;
+      }
+    };
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    return () => {
+      window.removeEventListener('keydown', down);
+      window.removeEventListener('keyup', up);
+    };
+  }, [isSpaceDown]);
+
   // Fit device frame (with bezel) in canvas; then apply user zoom
   const fitScale =
     containerSize.width > 0 && containerSize.height > 0
@@ -66,8 +117,30 @@ export function Canvas() {
       : 1;
   const effectiveScale = fitScale * zoom;
 
+  // Pan mouse handlers
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (!isSpaceDown) return;
+    setIsPanning(true);
+    panStartRef.current = { x: e.clientX, y: e.clientY, offX: panOffset.x, offY: panOffset.y };
+  }, [isSpaceDown, panOffset.x, panOffset.y]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isPanning || !panStartRef.current) return;
+    setPanOffset({
+      x: panStartRef.current.offX + (e.clientX - panStartRef.current.x),
+      y: panStartRef.current.offY + (e.clientY - panStartRef.current.y),
+    });
+  }, [isPanning]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsPanning(false);
+    panStartRef.current = null;
+  }, []);
+
   const handleCanvasClick = (e: React.MouseEvent) => {
     if (isPreviewMode) return;
+    // If we were panning, don't deselect
+    if (isPanning) return;
     // Click on canvas itself deselects
     if (e.target === e.currentTarget) {
       selectNode(null);
@@ -137,15 +210,21 @@ export function Canvas() {
     );
   }
 
-  const handleZoomIn = () => setZoom((z) => Math.min(z + 0.1, 2));
-  const handleZoomOut = () => setZoom((z) => Math.max(z - 0.1, 0.5));
-  const handleZoomReset = () => setZoom(1);
+  const handleZoomIn = () => setZoom((z) => Math.min(z + 0.1, 3));
+  const handleZoomOut = () => setZoom((z) => Math.max(z - 0.1, 0.2));
+  const handleZoomReset = () => { setZoom(1); setPanOffset({ x: 0, y: 0 }); };
 
   return (
     <div
       ref={containerRef}
-      className="flex-1 min-h-0 overflow-hidden flex items-center justify-center relative"
+      className={`flex-1 min-h-0 overflow-hidden flex items-center justify-center relative${
+        isSpaceDown ? (isPanning ? ' cursor-grabbing' : ' cursor-grab') : ''
+      }`}
       onClick={handleCanvasClick}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onDragLeave={handleDragLeave}
@@ -164,7 +243,7 @@ export function Canvas() {
           variant="ghost"
           onClick={handleZoomOut}
           className="h-9 w-9"
-          disabled={zoom <= 0.5}
+          disabled={zoom <= 0.2}
         >
           <ZoomOut className="h-4 w-4" />
         </Button>
@@ -176,7 +255,7 @@ export function Canvas() {
           variant="ghost"
           onClick={handleZoomIn}
           className="h-9 w-9"
-          disabled={zoom >= 2}
+          disabled={zoom >= 3}
         >
           <ZoomIn className="h-4 w-4" />
         </Button>
@@ -198,7 +277,7 @@ export function Canvas() {
             style={{
               width: frameWidth,
               height: frameHeight,
-              transform: `translate(-50%, -50%) scale(${effectiveScale})`,
+              transform: `translate(calc(-50% + ${panOffset.x}px), calc(-50% + ${panOffset.y}px)) scale(${effectiveScale})`,
               transformOrigin: 'center center',
             }}
           >
