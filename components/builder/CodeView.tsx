@@ -380,14 +380,13 @@ export function CodeView({
           </div>
         )}
 
-        <div className="flex-1 flex items-center justify-center min-h-0 p-4 overflow-auto">
-          <PreviewCanvas
-            rootNode={layoutJson ? null : rootNode}
-            layoutJson={layoutJson}
-            platformComponents={platformComponents}
-            className="shrink-0"
-          />
-        </div>
+        {/* PreviewCanvas fills remaining height; auto-fit + toolbar live inside */}
+        <PreviewCanvas
+          rootNode={layoutJson ? null : rootNode}
+          layoutJson={layoutJson}
+          platformComponents={platformComponents}
+          fitContainer
+        />
       </div>
     </div>
   );
