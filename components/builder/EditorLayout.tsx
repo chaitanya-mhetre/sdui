@@ -62,11 +62,36 @@ export function EditorLayout({
     const handler = (e: KeyboardEvent) => {
       // Skip when focus is inside Monaco editor or a textarea/input
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
-      if (tag === 'textarea' || tag === 'input') return;
+      const isEditableTarget =
+        tag === 'textarea' ||
+        tag === 'input' ||
+        (e.target as HTMLElement)?.isContentEditable;
+      if (isEditableTarget) return;
       // Monaco editor has class "monaco-editor"
       if ((e.target as HTMLElement)?.closest?.('.monaco-editor')) return;
 
       const meta = e.metaKey || e.ctrlKey;
+
+      // Delete / Backspace — delete the selected node (no meta key required)
+      if (!meta && (e.key === 'Delete' || e.key === 'Backspace')) {
+        const state = useBuilderStore.getState();
+        const selectedId = state.selection.selectedNodeId;
+        const rootId = state.rootNode?.id;
+        // Don't delete the root or the screen container (first child of root)
+        const isScreenContainer = state.rootNode?.children?.[0]?.id === selectedId;
+        if (selectedId && selectedId !== rootId && !isScreenContainer) {
+          e.preventDefault();
+          state.deleteNode(selectedId);
+        }
+        return;
+      }
+
+      // Escape — clear selection
+      if (!meta && e.key === 'Escape') {
+        useBuilderStore.getState().selectNode(null);
+        return;
+      }
+
       if (!meta) return;
 
       if (e.key === 'z' && !e.shiftKey) {
@@ -79,6 +104,16 @@ export function EditorLayout({
         // Ctrl+Y as alternative redo (Windows convention)
         e.preventDefault();
         if (historyIndex < historyLength - 1) redo();
+      } else if (e.key === 'd') {
+        // Cmd/Ctrl+D — duplicate selected node (Figma convention)
+        const state = useBuilderStore.getState();
+        const selectedId = state.selection.selectedNodeId;
+        const rootId = state.rootNode?.id;
+        const isScreenContainer = state.rootNode?.children?.[0]?.id === selectedId;
+        if (selectedId && selectedId !== rootId && !isScreenContainer && typeof (state as any).duplicateNode === 'function') {
+          e.preventDefault();
+          (state as any).duplicateNode(selectedId);
+        }
       }
     };
     window.addEventListener('keydown', handler);
